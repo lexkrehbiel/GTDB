@@ -1,0 +1,93 @@
+
+h1 {
+  text-align: center;
+}
+
+input {
+  border-radius: 10px;
+  height: 2em;
+  vertical-align: super;
+  border: solid #d5d5d5;
+  border-width: .5px;
+  margin-bottom: 5px;
+}
+
+.danger {
+  color: orange;
+  font-weight: bold;
+  font-size: 40px;
+  text-align: center;
+}
+
+.box {
+  background-color: #e8e8e8;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.box h6 {
+  border-bottom: solid #d5d5d5;
+  border-bottom-width: 1px;
+}
+
+.box h5 {
+  padding: 5px;
+  margin-left: 10px;
+  margin-right: 10px;
+  border-bottom: solid #d5d5d5;
+  border-bottom-width: 1px;
+  font-size: 18px;
+}
+
+.listitem p{
+  margin-left: 15px;
+  font-size: 12px;
+  max-height: 2em;
+}
+
+.box div {
+  background-color: white;
+  border-radius: 5px;
+  margin-top: 4px;
+}
+
+.listItem {
+
+}
+
+button {
+  background-color: orange;
+  border-radius: 3px;
+  height: 28px;
+  border: none;
+  margin: 3px;
+  font-size: inherit;
+  padding: 2px;
+  color:white;
+
+}
+
+
+i {
+  color: white;
+}
+
+h4 {
+  margin-top: -10px;
+  margin-bottom: 2px;
+  vertical-align: super;
+  font-weight: bold;
+}
+
+select {
+  vertical-align: super;
+}
+
+p{
+  display: inline-block;
+  font-size: large;
+  vertical-align: super;
+  padding-bottom: 7px;
+  margin-right: 5px;
+}

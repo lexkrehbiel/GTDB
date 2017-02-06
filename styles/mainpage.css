@@ -1,0 +1,54 @@
+div {
+  text-align: center;
+}
+
+button {
+  border-width: 3px;
+  border-color: black;
+  margin: 3px;
+  width: 15em;
+  height: 20em;
+  background-blend-mode: soft-light;
+}
+
+button.terrmap {
+  background-image : url("../figures/dotmap.jpg");
+  background-position: center;
+}
+
+button.terrchart {
+  background-image : url("../figures/barchart.gif");
+  background-position: center;
+}
+
+button.terrclock {
+  background-image : url("../figures/clock.png");
+  background-position: center;
+}
+
+button.terrlist {
+  background-image : url("../figures/reading.jpg");
+  background-position: center;
+}
+
+button.terrdanger {
+  background-image : url("../figures/danger.png");
+  background-position: center;
+}
+
+div.scrollable{
+  height : 22em;
+  overflow: auto;
+  white-space: nowrap;
+}
+
+div.scrollable p{
+  white-space: normal;
+  padding: 2px;
+}
+
+div.scrollable h2{
+  top: 0;
+  vertical-align: top;
+  word-wrap: normal;
+}
