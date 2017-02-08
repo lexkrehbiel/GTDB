@@ -1,6 +1,11 @@
 
 h1 {
+  font-size: 60px;
   text-align: center;
+}
+
+.blackmat{
+  color: black;
 }
 
 input {
@@ -17,6 +22,28 @@ input {
   padding: 10px;
   border-radius: 5px;
   margin-top: 10px;
+}
+
+.menubar {
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+  text-align: center;
+  padding-top: 22px;
+  margin-bottom: 0px;
+}
+
+.menubar button {
+  width: 18px;
+  height: 18px;
+  margin: 8px;
+  padding: 0px;
+  background-color: white;
+}
+
+.menubar i {
+  font-size: 20px;
+  color: orange;
 }
 
 .box h6 {

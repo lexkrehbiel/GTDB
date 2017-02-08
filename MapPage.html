@@ -15,16 +15,22 @@
 <body>
 
 <div class = "container">
+  <div style="text-align:center; margin-top:10px">
+    <h8 class="menubar">
+      <button style="margin-top: 18px"><i class="material-icons" style>home</i></button>
+      <button><i class="material-icons">assessment</i></button>
+      <button><i class="material-icons">list</i></button>
+      <button><i class="material-icons">schedule</i></button>
+      <button><i class="material-icons">warning</i></button>
+      <button><i class="material-icons">pin_drop</i></button>
+    </h8>
+  </div>
   <h1>Map</h1>
-  <h3>
-    <p> Attribute to Analyze </p>
-    <select name="Attribute">
-      <option value="Location">Location</option>
-      <option value="Target">Target</option>
-    </select>
-    <p style="margin-left:9px"> Value</p>
-    <input style="height:1em" type="text"></input>
-  </h3>
+  <h3>Enter location</h3>
+  <div>
+    <input type="text"></input>
+    <button><i class="material-icons">search</i></button>
+  </div>
   <div class="box">
   <h4>
     <p style="margin-right: 7px; margin-top: 30px">Constraints</p>
@@ -40,8 +46,9 @@
     </select>
     <p style="margin-left:9px"> Value</p>
     <input type="text"></input>
+    <i class="material-icons blackmat">close</i>
   </h6>
-  <h6>
+  <h6 class="constraint">
     <p> Constraint Type</p>
     <select name="Attribute">
       <option value="Time: before">Time: before</option>
@@ -51,12 +58,13 @@
     </select>
     <p style="margin-left:9px"> Value</p>
     <input type="text"></input>
+    <i class="material-icons blackmat">close</i>
   </h6>
   </div>
 
   <div class="box" style="height:40em">
   <h4>
-    <p style="margin-right: 7px; margin-top: 30px">Graph</p>
+    <p style="margin-right: 7px; margin-top: 30px">Map</p>
     <button><i class="material-icons">refresh</i></button>
   </h4>
   <div class = "map">
