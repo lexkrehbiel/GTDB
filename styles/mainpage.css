@@ -11,6 +11,10 @@ button {
   background-blend-mode: soft-light;
 }
 
+.constraint i {
+  color: black;
+}
+
 button.terrmap {
   background-image : url("../figures/dotmap.jpg");
   background-position: center;
