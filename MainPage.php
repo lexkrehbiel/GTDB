@@ -18,23 +18,23 @@
   <h1>Welcome to TerrorismFacts!</h1>
   <p>Select the information type you're after</p>
   <div>
-  <button class = "terrmap" onclick="javascript:document.location='MapPage.html'">
+  <button class = "terrmap" onclick="javascript:document.location='MapPage.php'">
     <h2>Map</h2>
     <p>Visualize hits in a specified area </p>
   </button>
-  <button class = "terrchart" onclick="javascript:document.location='ChartPage.html'">
+  <button class = "terrchart" onclick="javascript:document.location='ChartPage.php'">
     <h2>Bar Chart</h2>
     <p>See the prevalence of different attributes of attacks </p>
   </button>
-  <button class = "terrclock" onclick="javascript:document.location='TimePage.html'">
+  <button class = "terrclock" onclick="javascript:document.location='TimePage.php'">
     <h2>Timing</h2>
     <p>Analyze how attacks vary over time</p>
   </button>
-  <button class = "terrlist" onclick="javascript:document.location='ListPage.html'">
+  <button class = "terrlist" onclick="javascript:document.location='ListPage.php'">
     <h2>List</h2>
     <p>Search for and learn about specific attacks</p>
   </button>
-  <button class = "terrdanger" onclick="javascript:document.location='DangerPage.html'">
+  <button class = "terrdanger" onclick="javascript:document.location='DangerPage.php'">
     <h2>Danger</h2>
     <p>Discover the level of safety in a given location</p>
   </button>

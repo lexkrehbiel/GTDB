@@ -17,12 +17,12 @@
 <div class = "container">
   <div style="text-align:center; margin-top:10px">
     <h8 class="menubar">
-        <button style="margin-top: 18px" onclick="javascript:document.location='MainPage.html'"><i class="material-icons" style>home</i></button>
-        <button><i class="material-icons" onclick="javascript:document.location='ChartPage.html'">assessment</i></button>
-        <button><i class="material-icons" onclick="javascript:document.location='ListPage.html'">list</i></button>
-        <button><i class="material-icons" onclick="javascript:document.location='TimePage.html'">schedule</i></button>
-        <button><i class="material-icons" onclick="javascript:document.location='DangerPage.html'">warning</i></button>
-        <button><i class="material-icons" onclick="javascript:document.location='MapPage.html'">pin_drop</i></button>
+        <button style="margin-top: 18px" onclick="javascript:document.location='MainPage.php'"><i class="material-icons" style>home</i></button>
+        <button><i class="material-icons" onclick="javascript:document.location='ChartPage.php'">assessment</i></button>
+        <button><i class="material-icons" onclick="javascript:document.location='ListPage.php'">list</i></button>
+        <button><i class="material-icons" onclick="javascript:document.location='TimePage.php'">schedule</i></button>
+        <button><i class="material-icons" onclick="javascript:document.location='DangerPage.php'">warning</i></button>
+        <button><i class="material-icons" onclick="javascript:document.location='MapPage.php'">pin_drop</i></button>
     </h8>
   </div>
   <h1>Map</h1>
