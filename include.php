@@ -8,18 +8,14 @@ function oracle_query($query,$specifier){
   oci_execute($statement);
 
   $specifier->output($statement);
-  // while (($row = oci_fetch_object($statement))) {
-  //     var_dump($row);
-  // }
 
-  //
-  // VERY important to close Oracle Database Connections and free statements!
-  //
   oci_free_statement($statement);
   oci_close($connection);
 
 }
 
+//each time you have specific output needs, make an instance
+//of a class with an output function
 class query_specifier{
   function output($statement){
     while (($row = oci_fetch_object($statement))) {
