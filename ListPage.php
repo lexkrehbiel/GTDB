@@ -67,14 +67,27 @@
     <p style="margin-right: 7px; margin-top: 30px">Search Results </p>
     <button><i class="material-icons">refresh</i></button>
   </h4>
-  <div class="listitem">
-    <h5> Title 1 </h5>
-    <p> Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam</p>
-  </div>
-  <div class="listitem">
-    <h5> Title 2 </h5>
-    <p> details</p>
-  </div>
+  <?php
+    class q {
+      function output($statement){
+        $row = oci_fetch_object($statement);
+        //var_dump($row);
+        $i = 0;
+        while ($i<=5 && ($row = oci_fetch_object($statement))) {
+            echo "<div class=\"listitem\">";
+            echo "<h5>".($row->CITY).", ".($row->COUNTRY_TXT)."</h5>";
+            echo "<p>".($row->SUMMARY_TXT)."</p>";
+            $i++;
+        }
+      }
+    }
+    include("include.php");
+    $spec = new q;
+    $query = "SELECT DISTINCT * FROM EVENTS, LOCATIONS, COUNTRY
+              WHERE EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID
+              AND COUNTRY.COUNTRY_ID = LOCATIONS.COUNTRY_ID";
+    oracle_query($query, $spec);
+  ?>
   </div>
 
 </div>
