@@ -18,15 +18,4 @@ function oracle_query($query,$specifier){
 
 }
 
-//each time you have specific output needs, make an instance
-//of a class with an 'output' function
-
-// class query_specifier{
-//   function output($statement){
-//     while (($row = oci_fetch_object($statement))) {
-//         var_dump($row);
-//     }
-//   }
-// }
-
 ?>

@@ -54,14 +54,11 @@
           $keywordQuery = "";
         }
 
-        //proces the other criteria
+        //process the other criteria
         for($crit_proc = 0; $crit_proc<=$criteria_count; $crit_proc++){
           $attrStr = "attribute".$crit_proc;
           $valStr = "value".$crit_proc;
 
-          //debugging
-            // echo "attr: ".$_POST[$attrStr]." \n";
-            // echo "val: ".$_POST[$valStr]." \n";
 
           if(isset($_POST[$attrStr]) && isset($_POST[$valStr]) && strlen($_POST[$valStr])>0){
             $attribute = $_POST[$attrStr];
@@ -105,7 +102,7 @@
     <p style="margin-right: 7px; margin-top: 30px">Search Criteria:
     </p>
     <form action = "<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method = post>
-        <!-- <input type = "submit" name = "button" value = "Submit" > -->
+
         <button type="submit" name="add_criteria"><i class="material-icons" >add</i></button>
         <button type="submit" name="remove_criteria"><i class="material-icons" >remove</i></button>
         <input type = "hidden" name = "criteria_count" value = "<?php print $criteria_count; ?>"; />
@@ -148,7 +145,7 @@
   <?php
 
     if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["search"])) {
-    //echo $
+
 
     class q {
       function output($statement){
@@ -178,18 +175,7 @@
               .$excessSets." WHERE EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID "
               .$excessJoins." AND COUNTRY.COUNTRY_ID = LOCATIONS.COUNTRY_ID "
               .$allConstraints. " AND ROWNUM < 51";
-              // .$keywordQuery
-              // .$locationQuery
-              // .$timeQueryBefore
-              // .$timeQueryAfter." AND ROWNUM < 200 ";
 
-    //$queryBuilder->POSTSets(); //returns the necessary sets given the constraints
-    //$queryBuilder->makeQuery($constraints);
-    //$queryBui
-    //$constraint = (new constraint("Date","Before","2/21/1970"))->toQueryConstraint();
-    //oracle_query($queryBuildr->buildQuery(), $spec);
-    //echo $query;
-    //echo $_POST
     oracle_query($query, $spec);
   }
   ?>
