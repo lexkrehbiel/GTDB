@@ -2,9 +2,9 @@
 
     if(!session_id()) session_start();
     $attrList = array("Time","Location","Banana");
-    $allConstraintTypes = array("Time:Before","Time:after","Apples");
+    $allConstraintTypes = array("Location", "Hostages", "Time: Before","Time: After",);
     if(!isset($_SESSION['filename'])) {
         $_SESSION['attrList'] = $attrList;
-        $_SESSION['constraintList'] = $allConstraintTypes;
+        $_SESSION['allConstraintTypes'] = $allConstraintTypes;
     }
 ?>
