@@ -212,7 +212,10 @@
               echo "<p>Weapon: ".$row->WEAPON_TYPE_TXT;
             }
             if(isset($row->NHOSTKID)){
-              echo "<p>Hostages: ".$row->NHOSTKID." for ".$row->NDAYS." days";
+              echo "<p>Hostages: ".$row->NHOSTKID;
+              if($row->NDAYS > 0){
+                echo " for ".$row->NDAYS." days";
+              }
             }
             if(isset($row->TARGET)){
               echo "<p>Target: ".$row->TARGET;
