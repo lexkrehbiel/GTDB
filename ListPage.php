@@ -218,6 +218,7 @@
               echo "<p>Target: ".$row->TARGET;
             }
             echo "</p>";
+            echo "</div>";
         }
       }
     }
