@@ -36,7 +36,18 @@
     $excessSets = "";
     $excessJoins = "";
     $resultsNum = 0;
-    $hostageQuery = "";
+    $hostageCountQuery = "";
+    $hostageLengthQuery = "";
+    $weaponQuery = "";
+    $targetQuery = "";
+
+    function ifSetElseEmpty($valueName){
+      if(isset($_POST[$valueName])){
+        return $_POST[$valueName];
+      } else {
+        return "";
+      }
+    }
 
     $criteria_count = 0;
     if($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -55,6 +66,8 @@
         }
 
         //process the other criteria
+        unset($_POST['Hostages']);
+
         for($crit_proc = 0; $crit_proc<=$criteria_count; $crit_proc++){
           $attrStr = "attribute".$crit_proc;
           $valStr = "value".$crit_proc;
@@ -79,22 +92,44 @@
                 $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
                 $timeQueryAfter = " AND ".$dbDate." > ".$inputDate;
                 break;
-              case "Hostages":
-                $excessSets = $excessSets.", Hostage_Situations ";
+              case "Hostages: Number of":
+                if(!isset($_POST['Hostages'])){
+                  $excessSets = $excessSets.", HOSTAGE_SITUATIONS";
+                  $excessJoins = $excessJoins." AND EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
+                }
+                $_POST['Hostages'] = 'yes';
                 $excessJoins = $excessJoins." AND EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
-                $hostageQuery = " AND NHOSTKID >= ".$value;
+                $hostageCountQuery = " AND NHOSTKID >= ".$value;
+              break;
+              case "Hostages: Days":
+                if(!isset($_POST['Hostages'])){
+                  $excessSets = $excessSets.", HOSTAGE_SITUATIONS";
+                  $excessJoins = $excessJoins." AND EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
+                }
+                $_POST['Hostages'] = 'yes';
+                $hostageCountQuery = " AND NDAYS >= ".$value;
+              break;
+              case "Weapon":
+                $excessSets = $excessSets.", WEAPON_TYPE, EVENTS_WEAPONS";
+                $excessJoins = $excessJoins." AND EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID AND EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID ";
+                $weaponQuery = " AND WEAPON_TYPE_TXT LIKE '%".$value."%' ";
+              break;
+              case "Target":
+                $excessSets = $excessSets.", EVENTS_TARGETS, TARGETS";
+                $excessJoins = $excessJoins." AND EVENTS.EVENT_ID = EVENTS_TARGETS.EVENT_ID AND EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID";
+                $targetQuery = " AND TARGETS.TARGET LIKE '%".$value."%' ";
               break;
             }
 
           }
         }
-        $allConstraints = $keywordQuery.$timeQueryBefore.$timeQueryAfter.$hostageQuery.$locationQuery;
+        $allConstraints = $keywordQuery.$timeQueryBefore.$timeQueryAfter.$hostageCountQuery.$locationQuery.$weaponQuery.$targetQuery;
       }
     }
 
   ?>
   <form action = "<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method = POST>
-    <input type="text" name="keyword"></input>
+    <input type="text" name="keyword" value="<?php echo ifSetElseEmpty("keyword");?>"></input>
     <button type="submit" name="search"><i class="material-icons">search</i></button>
 
   <div class="box">
@@ -117,17 +152,27 @@
             <select name=\"attribute".$criteria_num."\">";
 
           if(!session_id()) session_start();
-            include("global.php");
-            $allConstraintTypes = $_SESSION['allConstraintTypes'];
+          include("global.php");
+          $allConstraintTypes = $_SESSION['allConstraintTypes'];
+          $oldValue = ifSetElseEmpty("attribute".$criteria_num);
+          echo "FOUND: ".$oldValue;
 
           foreach($allConstraintTypes as $attr){
-            echo "<option value=\"".$attr ."\">".$attr."</option>";
+            echo "<option value=\"".$attr ."\"";
+            if($oldValue == $attr){
+              echo " selected ";
+            }
+            echo ">".$attr."</option>";
           }
 
 
           echo "</select>
             <p style=\"margin-left:9px\"> Value</p>
-            <input type=\"text\" name=\"value".$criteria_num."\"></input>
+            <input type=\"text\" name=\"value".$criteria_num."\"";
+
+          echo "value=\"".ifSetElseEmpty("value".$criteria_num)."\"";
+
+          echo "></input>
           </h6>";
         }
      ?>
@@ -154,16 +199,29 @@
             echo "<div class=\"listitem\">";
             echo "<h5>".($row->CITY).", ".($row->COUNTRY_TXT)."</h5>";
             echo "<p>";
-            if(strlen($row->SUMMARY_TXT) > 0){
+            if(isset($row->SUMMARY_TXT)){
               echo $row->SUMMARY_TXT;
             }else{
               echo ($row->IMONTH)."/".($row->IDAY)."/".($row->IYEAR).": ";
-              if(strlen($row->MOTIVE) > 0){
+              if(isset($row->MOTIVE)){
                 echo $row->MOTIVE;
               }
               echo "\n(No other information)";
             }
+            if(isset($row->WEAPON_TYPE_TXT)){
+              echo "<p>Weapon: ".$row->WEAPON_TYPE_TXT;
+            }
+            if(isset($row->NHOSTKID)){
+              echo "<p>Hostages: ".$row->NHOSTKID;
+              if($row->NDAYS > 0){
+                echo " for ".$row->NDAYS." days";
+              }
+            }
+            if(isset($row->TARGET)){
+              echo "<p>Target: ".$row->TARGET;
+            }
             echo "</p>";
+            echo "</div>";
         }
       }
     }
@@ -175,6 +233,8 @@
               .$excessSets." WHERE EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID "
               .$excessJoins." AND COUNTRY.COUNTRY_ID = LOCATIONS.COUNTRY_ID "
               .$allConstraints. " AND ROWNUM < 51";
+
+    //echo $query;
 
     oracle_query($query, $spec);
   }
