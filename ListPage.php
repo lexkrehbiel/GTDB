@@ -155,7 +155,6 @@
           include("global.php");
           $allConstraintTypes = $_SESSION['allConstraintTypes'];
           $oldValue = ifSetElseEmpty("attribute".$criteria_num);
-          echo "FOUND: ".$oldValue;
 
           foreach($allConstraintTypes as $attr){
             echo "<option value=\"".$attr ."\"";
@@ -176,13 +175,10 @@
           </h6>";
         }
      ?>
-  <?php
-
-  ?>
   </div>
   </form>
 
-  <div class="box">
+<div class="box">
   <h4>
     <p style="margin-right: 7px; margin-top: 30px">Search Results
       </p>
