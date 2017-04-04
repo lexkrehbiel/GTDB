@@ -53,7 +53,7 @@
 		## Query stuff
 		include("include.php");
 		$spec = new q;
-		$query = "SELECT count(event_id) AS TCOUNT FROM EVENTS";
+		$query = "SELECT COUNT(*) AS TCOUNT FROM EVENTS";
 		oracle_query($query, $spec);
 	
 		
