@@ -40,6 +40,34 @@
   </button>
 </div>
 
+<br><br>
+<div class="popup" onclick="showTuplePopup()">Tuple Count
+  <span class="popuptext" id="tupleCount">
+	<?php
+		## Output object
+		class q{
+			function output($statement){
+				echo "<p>". oci_fetch_object($statement)->TCOUNT ." tuples</p>";
+			}
+		}
+		## Query stuff
+		include("include.php");
+		$spec = new q;
+		$query = "SELECT count(event_id) AS TCOUNT FROM EVENTS";
+		oracle_query($query, $spec);
+	
+		
+	?>
+  </span>
+</div>
+<script>
+// When the user clicks on <div>, open the popup
+function showTuplePopup() {
+    var popup = document.getElementById("tupleCount");
+    popup.classList.toggle("show");
+}
+</script>
+
 </body>
 
 </html>
