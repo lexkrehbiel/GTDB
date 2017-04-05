@@ -53,7 +53,13 @@
 		## Query stuff
 		include("include.php");
 		$spec = new q;
-		$query = "SELECT COUNT(*) AS TCOUNT FROM EVENTS";
+		$query = "SELECT
+				(SELECT COUNT(*) FROM EVENTS)+
+				(SELECT COUNT(*) FROM TARGETS)+
+				(SELECT COUNT(*) FROM GROUPS)+
+				(SELECT COUNT(*) FROM LOCATIONS)+
+				(SELECT COUNT(*) FROM HOSTAGE_SITUATIONS)
+				AS TCOUNT FROM EVENTS WHERE ROWNUM =1";
 		oracle_query($query, $spec);
 	
 		
