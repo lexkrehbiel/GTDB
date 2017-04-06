@@ -28,52 +28,60 @@
   <h1>List</h1>
   <h3>Search by Keyword</h3>
   <?php
+  
+	// Query variables for final SQL statement
     $locationQuery = "";
     $timeQueryBefore = "";
     $timeQueryAfter = "";
     $keywordQuery = "";
     $allConstraints = "";
-    $excessSets = "";
     $excessJoins = "";
     $resultsNum = 0;
     $hostageCountQuery = "";
     $hostageLengthQuery = "";
+	$casualtiesQuery = "";
     $weaponQuery = "";
     $targetQuery = "";
+	$groupsQuery = "";
 
+	// Checks if the value is empty or not and sets the value accordingly
     function ifSetElseEmpty($valueName){
-      if(isset($_POST[$valueName])){
+      if(!empty($_POST[$valueName])){
         return $_POST[$valueName];
       } else {
         return "";
       }
     }
 
+	// Keep track of number of constraints for form submission
     $criteria_count = 0;
     if($_SERVER["REQUEST_METHOD"] == "POST") {
       $criteria_count = isset($_POST['criteria_count']) ? $_POST['criteria_count'] : 0;
+	  
+	  // Add criteria if "+" button is pushed
       if(isset($_POST["add_criteria"])){
           $criteria_count++;
-      } else if(isset($_POST["remove_criteria"])){
+		  
+	  // Remove criteria if "-" button pushed (don't let count go below 0)
+      } else if(isset($_POST["remove_criteria"]) && $criteria_count>0){
           $criteria_count--;
       } else {
-
-        //process the keyword
-        if(isset($_POST['keyword'])){
-          $keywordQuery = " AND EVENTS.SUMMARY_TXT LIKE '%".$_POST['keyword']."%' ";
+		  
+        // Keyword processing - if no keyword is entered, don't add the summary constraint
+        if(!empty($_POST['keyword'])){
+          $keywordQuery = " AND UPPER(EVENTS.SUMMARY_TXT) LIKE UPPER('%".$_POST['keyword']."%') ";
         } else {
           $keywordQuery = "";
         }
 
-        //process the other criteria
-        unset($_POST['Hostages']);
+        // Criteria processing
+        unset($_POST['Hostages']); // Make sure hostage_situations isn't included twice
 
         for($crit_proc = 0; $crit_proc<=$criteria_count; $crit_proc++){
           $attrStr = "attribute".$crit_proc;
           $valStr = "value".$crit_proc;
 
-
-          if(isset($_POST[$attrStr]) && isset($_POST[$valStr]) && strlen($_POST[$valStr])>0){
+          if(!empty($_POST[$attrStr]) && !empty($_POST[$valStr]) && strlen($_POST[$valStr])>0){
             $attribute = $_POST[$attrStr];
             $value = $_POST[$valStr];
             switch($attribute){
@@ -94,39 +102,40 @@
                 break;
               case "Hostages: Number of":
                 if(!isset($_POST['Hostages'])){
-                  $excessSets = $excessSets.", HOSTAGE_SITUATIONS";
-                  $excessJoins = $excessJoins." AND EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
-                }
-                $_POST['Hostages'] = 'yes';
-                $excessJoins = $excessJoins." AND EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
+					 $excessJoins = $excessJoins." LEFT OUTER JOIN HOSTAGE_SITUATIONS ON EVENTS.HOSTAGE_SITUATION_ID=hostage_situations.host_sit_id";
+				}
+				$_POST['Hostages'] = 'INCLUDED';
                 $hostageCountQuery = " AND NHOSTKID >= ".$value;
-              break;
+                break;
               case "Hostages: Days":
                 if(!isset($_POST['Hostages'])){
-                  $excessSets = $excessSets.", HOSTAGE_SITUATIONS";
-                  $excessJoins = $excessJoins." AND EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
-                }
-                $_POST['Hostages'] = 'yes';
-                $hostageCountQuery = " AND NDAYS >= ".$value;
-              break;
+					$excessJoins = $excessJoins." LEFT OUTER JOIN HOSTAGE_SITUATIONS ON EVENTS.HOSTAGE_SITUATION_ID=hostage_situations.host_sit_id";
+				}
+				$_POST['Hostages'] = 'INCLUDED';
+                $hostageLengthQuery = " AND NDAYS >= ".$value;
+                break;
               case "Weapon":
-                $excessSets = $excessSets.", WEAPON_TYPE, WEAPON_SUBTYPE, EVENTS_WEAPONS";
-                $excessJoins = $excessJoins." AND EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID AND EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID 
-				AND EVENTS_WEAPONS.WEAPON_SUBTYPE_ID = WEAPON_SUBTYPE.WEAPON_SUBTYPE_ID";
+                $excessJoins = $excessJoins." NATURAL JOIN EVENTS_WEAPONS NATURAL JOIN WEAPON_TYPE NATURAL JOIN WEAPON_SUBTYPE";
                 $weaponQuery = " AND (UPPER(WEAPON_TYPE_TXT) LIKE UPPER('%".$value."%') OR UPPER(WEAPON_SUBTYPE_TXT) LIKE UPPER('%".$value."%') )";
-              break;
+                break;
               case "Target":
-                $excessSets = $excessSets.", EVENTS_TARGETS, TARGETS, TARGET_SUBTYPE, TARGET_TYPE";
-                $excessJoins = $excessJoins." AND EVENTS.EVENT_ID = EVENTS_TARGETS.EVENT_ID AND EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID
-				AND TARGETS.TYPE_ID = TARGET_TYPE.TYPE_ID AND TARGETS.SUBTYPE_ID = TARGET_SUBTYPE.SUBTYPE_ID";
+                $excessJoins = $excessJoins." NATURAL JOIN EVENTS_TARGETS NATURAL JOIN TARGETS NATURAL JOIN TARGET_TYPE NATURAL JOIN TARGET_SUBTYPE";
                 $targetQuery = " AND (UPPER(TARGET_TYPE.TYPE_TXT) LIKE UPPER('%".$value."%') OR UPPER(TARGET_SUBTYPE.SUBTYPE_TXT) LIKE UPPER('%".$value."%')
 				OR UPPER(TARGETS.TARGET) LIKE UPPER('%".$value."%') )";
-              break;
+                break;
+			  case "Casualties":
+				$casualtiesQuery = " AND (N_KILL+N_WOUND)>=".$value;
+			    break;
+			  case "Groups":
+			    $excessJoins = $excessJoins." NATURAL JOIN EVENTS_GROUPS NATURAL JOIN GROUPS NATURAL JOIN GROUP_SUBNAMES";
+				$groupsQuery = " AND UPPER(GROUPS.GROUP_NAME) LIKE UPPER('%".$value."%')";
+			    break;
             }
 
           }
         }
-        $allConstraints = $keywordQuery.$timeQueryBefore.$timeQueryAfter.$hostageCountQuery.$locationQuery.$weaponQuery.$targetQuery;
+		// Include every constraint in the final query
+        $allConstraints = $keywordQuery.$timeQueryBefore.$timeQueryAfter.$hostageCountQuery.$hostageLengthQuery.$locationQuery.$weaponQuery.$targetQuery.$casualtiesQuery.$groupsQuery;
       }
     }
 
@@ -190,13 +199,16 @@
 
     if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["search"])) {
 
-	
+	// This class implements an output method so that oracle_query can be called
     class q {
       function output($statement){
-        $row = oci_fetch_object($statement);
+        //$row = oci_fetch_object($statement); // this line skips the first entry
+		$lnum = 0; //keep track of collapsible divs
         while ($row = oci_fetch_object($statement)) {
-            echo "<div class=\"listitem\">";
-            echo "<h5>".($row->CITY).", ".($row->COUNTRY_TXT)."</h5>";
+            echo "<div class='listitem'>"; //Holds a full entry for an event
+            echo "<a data-toggle='collapse' href='#collapse".$lnum."' style='text-decoration: none'> 
+			<h5 title='".$row->EVENT_ID."'>".($row->CITY).", ".($row->COUNTRY_TXT)."</h5></a>"; //set title to event_id, show city and country
+			echo "<div id='collapse".$lnum."' class='collapse'>"; // Holds rest of information, collapsed by default
             echo "<p>";
             if(isset($row->SUMMARY_TXT)){
               echo $row->SUMMARY_TXT;
@@ -205,32 +217,53 @@
               if(isset($row->MOTIVE)){
                 echo $row->MOTIVE;
               }
-              echo "\n(No other information)";
+              echo "(No summary available)";
             }
             if(isset($row->WEAPON_TYPE_TXT)){
-              echo "<p>Weapon: ".$row->WEAPON_TYPE_TXT;
+              echo "<p><b>Weapon: </b>".$row->WEAPON_TYPE_TXT.": ".$row->WEAPON_SUBTYPE_TXT;
             }
             if(isset($row->NHOSTKID)){
-              echo "<p>Hostages: ".$row->NHOSTKID;
+              echo "<p><b>Hostages: </b>".$row->NHOSTKID;
               if($row->NDAYS > 0){
                 echo " for ".$row->NDAYS." days";
               }
             }
             if(isset($row->TARGET)){
-              echo "<p>Target: ".$row->TARGET;
+              echo "<p><b>Target: </b>".$row->TARGET;
             }
+			if(isset($row->N_KILL) && isset($row->N_WOUND)){
+				$casualties = $row->N_KILL+$row->N_WOUND;
+				echo "<p><b>Casualties: </b>".$casualties;
+			}
+			if(isset($row->PROP_VALUE)){
+				if ($row->PROP_VALUE != -99){
+					echo "<p><b>Property Damage: </b>".$row->PROP_VALUE;
+				} else {
+					echo "<p><b>Property Damage: </b> Unknown";
+				}
+			}
             echo "</p>";
-            echo "</div>";
+            echo "</div>"; //collapsible info
+			echo "</div>"; //listitem container
+			$lnum++;
         }
       }
     }
     include("include.php");
     $spec = new q;
 	
-
-    $query = "SELECT DISTINCT * FROM EVENTS, LOCATIONS, COUNTRY "
-              .$excessSets." WHERE EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID "
-              .$excessJoins." AND COUNTRY.COUNTRY_ID = LOCATIONS.COUNTRY_ID "
+	// I want to be able to display consistent information for each event, but idk how to make the proper joins to account for multiplicity of weapons, groups, targets, etc
+	/*$excessJoins = "NATURAL LEFT JOIN EVENTS_TARGETS NATURAL LEFT JOIN TARGETS
+					NATURAL LEFT JOIN TARGET_TYPE NATURAL LEFT JOIN TARGET_SUBTYPE 
+					NATURAL LEFT JOIN EVENTS_WEAPONS NATURAL LEFT JOIN WEAPON_TYPE 
+					NATURAL LEFT JOIN WEAPON_SUBTYPE 
+					NATURAL LEFT JOIN EVENTS_GROUPS NATURAL LEFT JOIN GROUPS
+					NATURAL LEFT JOIN GROUP_SUBNAMES NATURAL LEFT JOIN EVENTS_ATTACK_TYPES 
+					NATURAL LEFT JOIN ATTACK_TYPES LEFT OUTER JOIN HOSTAGE_SITUATIONS 
+					ON EVENTS.HOSTAGE_SITUATION_ID=hostage_situations.host_sit_id";*/ 
+					
+    $query = "SELECT DISTINCT * FROM EVENTS NATURAL JOIN LOCATIONS NATURAL JOIN COUNTRY NATURAL JOIN REGION "
+              .$excessJoins.  " WHERE event_id>0 "
               .$allConstraints. " AND ROWNUM < 51";
 
     //echo $query;
