@@ -205,8 +205,9 @@
 		    $lnum = 0; //keep track of collapsible divs
         while ($row = oci_fetch_object($statement)) {
             echo "<div class='listitem'>"; //Holds a full entry for an event
-            echo "<a data-toggle='collapse' href='#collapse".$lnum."' style='text-decoration: none'> 
-			<h5 title='".$row->EVENT_ID."'>".($row->CITY).", ".($row->COUNTRY_TXT)."</h5></a>"; //set title to event_id, show city and country
+            echo "<a data-toggle='collapse' href='#collapse".$lnum."' style='text-decoration: none'>
+			<h5 title='".$row->EVENT_ID."'>".($row->IMONTH)."/".($row->IDAY)."/".($row->IYEAR).": 
+			".($row->CITY).", ".($row->COUNTRY_TXT)."</h5></a>"; //set title to event_id, show city and country
 			echo "<div id='collapse".$lnum."' class='collapse'>"; // Holds rest of information, collapsed by default
             echo "<p>";
             if(isset($row->SUMMARY_TXT)){
