@@ -202,8 +202,7 @@
 	// This class implements an output method so that oracle_query can be called
     class q {
       function output($statement){
-        //$row = oci_fetch_object($statement); // this line skips the first entry
-		$lnum = 0; //keep track of collapsible divs
+		    $lnum = 0; //keep track of collapsible divs
         while ($row = oci_fetch_object($statement)) {
             echo "<div class='listitem'>"; //Holds a full entry for an event
             echo "<a data-toggle='collapse' href='#collapse".$lnum."' style='text-decoration: none'> 
