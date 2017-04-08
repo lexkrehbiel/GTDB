@@ -1,3 +1,24 @@
+<!--?php
+include("chartsPHP/config.php");
+include("chartsPHP/lib/inc/chartphp_dist.php");
+include("config.php");
+
+$p = new chartphp();
+
+$p->data_sql = "select country_txt, count(event_id) as attacks
+				from country natural join location natural join events
+				where country_txt= 'Peru' or country_txt= 'China' or country_txt='Iran'
+				group by country_txt";
+
+$p->chart_type = "bar";
+
+$p->title = "Total Attacks per Country";
+$p->xlabel = "country_txt";
+$p->ylabel = "attacks";
+
+$out = $p->render('c1');
+?-->
+
 <!DOCTYPE html>
 
 <html lang = "en">
@@ -10,64 +31,284 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <?php
+    $sets = array("EVENTS");
+    $joins = array();
+    $constraints = array();
+    $queries = array();
+    $resultsNum = 0;
+    $cat_type = "";
+
+    function ifSetElseEmpty($valueName){
+      if(isset($_POST[$valueName])){
+        return $_POST[$valueName];
+      } else {
+        return "";
+      }
+    }
+
+	// Keep track of number of criteria
+    $criteria_count = 0;
+    if($_SERVER["REQUEST_METHOD"] == "POST") {
+      $criteria_count = isset($_POST['criteria_count']) ? $_POST['criteria_count'] : 0;
+      if(isset($_POST["add_criteria"])){
+          $criteria_count++;
+      } else if(isset($_POST["remove_criteria"])){
+          $criteria_count--;
+      } else {
+
+        $sets[] = "COUNTRY";
+        $sets[] = "LOCATIONS";
+        $joins[] = "EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID";
+        $joins[] = "LOCATIONS.COUNTRY_ID = COUNTRY.COUNTRY_ID";
+
+        // Process the search criteria
+        unset($_POST['Hostages']); // Keep track of whether there is already a hostage-related criteria
+
+		$criteria_txt = ""; // Keep track of this to display more information in our graph header
+
+        for($crit_proc = 0; $crit_proc<=$criteria_count; $crit_proc++){
+          $attrStr = "attribute".$crit_proc;
+          $valStr = "value".$crit_proc;
+
+		  // For every criteria and value, add the necessary sets, joins, and constraints
+          if(isset($_POST[$attrStr]) && !empty($_POST[$valStr])){
+            $attribute = $_POST[$attrStr];
+            $value = $_POST[$valStr];
+            switch($attribute){
+              case "Location":
+                $sets[] = "COUNTRY";
+                $sets[] = "LOCATIONS";
+                $joins[] = "EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID";
+                $joins[] = "LOCATIONS.COUNTRY_ID = COUNTRY.COUNTRY_ID";
+                $constraints[] = "(UPPER(COUNTRY_TXT) =UPPER('".$value."') OR UPPER(CITY) = UPPER('".$value."') OR UPPER(PROV_STATE) = UPPER('".$value."'))";
+				$criteria_txt = $criteria_txt . ", in " .$value;
+                break;
+              case "Time: Before":
+                list($month,$day,$year) = explode('/', $value);
+                $inputDate = 10000*$year+100*$month+$day;
+                $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
+                $constraints[] = $dbDate." < ".$inputDate;
+				$criteria_txt = $criteria_txt . ", before " .$value ;
+                break;
+              case "Time: After":
+                list($month,$day,$year) = explode('/', $value);
+                $inputDate = 10000*$year+100*$month+$day;
+                $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
+                $constraints[] = $dbDate." > ".$inputDate;
+				$criteria_txt = $criteria_txt . ", after " .$value ;
+                break;
+              case "Hostages: Number of":
+                $sets[] = "HOSTAGE_SITUATIONS";
+                $joins[] = "EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
+                $constraints[] = "NHOSTKID >= ".$value;
+				$criteria_txt = $criteria_txt . ", with " .$value ." or more hostage(s)";
+              break;
+              case "Hostages: Days":
+                $sets[] = "HOSTAGE_SITUATIONS";
+                $joins[] = "EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
+                $constraints[] = "NDAYS >= ".$value;
+				$criteria_txt = $criteria_txt . ", where hostages were kept for " .$value. " day(s) or more";
+
+              break;
+              case "Weapon":
+                $sets[] = "WEAPON_TYPE";
+				$sets[] = "WEAPON_SUBTYPE";
+                $sets[] = "EVENTS_WEAPONS";
+                $joins[] = "EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID";
+                $joins[] = "EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID ";
+				$joins[] = "EVENTS_WEAPONS.WEAPON_SUBTYPE_ID = WEAPON_SUBTYPE.WEAPON_SUBTYPE_ID ";
+                $constraints[] = "(UPPER(WEAPON_TYPE_TXT) LIKE UPPER('%".$value."%')
+								OR UPPER(WEAPON_SUBTYPE_TXT) LIKE UPPER('%".$value."%'))";
+				$criteria_txt = $criteria_txt . ", committed with (a) " .$value;
+
+              break;
+              case "Target":
+                $sets[] = "EVENTS_TARGETS";
+                $sets[] = "TARGETS";
+				$sets[] = "TARGET_TYPE";
+				$sets[] = "TARGET_SUBTYPE";
+                $joins[] = "EVENTS.EVENT_ID = EVENTS_TARGETS.EVENT_ID";
+                $joins[] = "EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID";
+				$joins[] = "TARGETS.TYPE_ID = TARGET_TYPE.TYPE_ID";
+                $joins[] = "TARGETS.SUBTYPE_ID = TARGET_SUBTYPE.SUBTYPE_ID";
+                $constraints[] = "(UPPER(TARGETS.TARGET) LIKE UPPER('%".$value."%')
+								OR UPPER(TYPE_TXT) LIKE UPPER('%".$value."%')
+								OR UPPER(SUBTYPE_TXT) LIKE UPPER('%".$value."%'))";
+				$criteria_txt = $criteria_txt . ", targeting " .$value ;
+			  break;
+			  case "Casualties":
+				$constraints[] = "(N_KILL+N_WOUND)>=".$value;
+				$criteria_txt = $criteria_txt . ", with " .$value ." or more casualties";
+			  break;
+			  case "Groups":
+				$sets = "EVENTS_GROUPS";
+				$sets = "GROUPS";
+				$sets = "GROUP_SUBNAMES";
+				$joins[] = "EVENTS.EVENT_ID = EVENTS_GROUPS.EVENT_ID";
+				$joins[] = "EVENTS_GROUPS.GROUP_ID = GROUPS.GROUP_ID";
+				$joins[] = "EVENTS_GROUPS.GROUP_SUBNAME_ID = GROUP_SUBNAMES.GROUP_SUBNAME_ID";
+				$constraints[] = "(UPPER(GROUP_NAME) LIKE UPPER('%".$value."%')
+								OR UPPER(GROUP_SUBNAME) LIKE UPPER('%".$value."%'))";
+				$criteria_txt = $criteria_txt . ", committed by " .$value ;
+              break;
+            }
+
+          }
+        }
+      }
+    }
+
+    $allSets = " ";
+    $sets = array_unique($sets);
+    $count = count($sets);
+    foreach($sets as $set){
+      $allSets = $allSets.$set;
+      if(--$count > 0){
+        $allSets = $allSets.", ";
+      }
+    }
+
+    $allJoins = "";
+    $joins = array_unique($joins);
+    $count = count($joins);
+    if($count > 0){ $allJoins = " WHERE ";}
+    foreach($joins as $join){
+      $allJoins = $allJoins.$join;
+      if(--$count > 0){
+        $allJoins = $allJoins." AND ";
+      }
+    }
+
+    $allConstraints = "";
+    $constraints = array_unique($constraints);
+    $count = count($constraints);
+    foreach($constraints as $constraint){
+      $allConstraints = " AND ".$constraint.$allConstraints;
+    }
+    // //$cat_type = "weapon_type_txt";
+    $query = "SELECT CITY as VALUE, COUNT(*) AS COUNT FROM"
+             .$allSets.$allJoins.$allConstraints
+             ." GROUP BY CITY ORDER BY COUNT DESC";
+             echo $query;
+  ?>
+  <script src="chartsPHP/lib/js/jquery.min.js"></script>
+  <script src="chartsPHP/lib/js/chartphp.js"></script>
+  <link rel="stylesheet" href="chartsPHP/lib/js/chartphp.css">
+  <!--Load the AJAX API-->
+      <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+      <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJY0Cau73gj1vqYBL3U9heRl6S6VFU7j4&callback=initMap"
+  type="text/javascript"></script>
+      <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+      <script type="text/javascript">
+      // Load the Visualization API and the piechart package.
+    google.charts.load('current', {'packages':['geochart']});
+
+    // Set a callback to run when the Google Visualization API is loaded.
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+
+      var quer = "<?php echo $query; ?>";
+
+      var jsonData = $.ajax({
+          type: "POST",
+          data: {query: quer},
+          url: "getDataMap.php",
+          dataType: "json",
+          async: false
+          }).responseText;
+      //
+      // // Create our data table out of JSON data loaded from server.
+      var data = new google.visualization.DataTable(jsonData);
+      var options = {
+        displayMode: 'markers',
+        colorAxis: {colors: ['yellow', 'orange']}
+      };
+
+      var chart = new google.visualization.GeoChart(document.getElementById('chart_div'));
+      chart.draw(data, options);
+    }
+    </script>
 </head>
 
 <body>
+  <?php
+    $categories = array("Month","Attack Type","Weapon Type","Target Type","Country","City","Group","Success of Attack","Suicide")
+  ?>
 
 <div class = "container">
   <div style="text-align:center; margin-top:10px">
     <h8 class="menubar">
-        <button style="margin-top: 18px" onclick="javascript:document.location='MainPage.php'"><i class="material-icons" style>home</i></button>
-        <button><i class="material-icons" onclick="javascript:document.location='ChartPage.php'">assessment</i></button>
-        <button><i class="material-icons" onclick="javascript:document.location='ListPage.php'">list</i></button>
-        <button><i class="material-icons" onclick="javascript:document.location='TimePage.php'">schedule</i></button>
-        <button><i class="material-icons" onclick="javascript:document.location='DangerPage.php'">warning</i></button>
-        <button><i class="material-icons" onclick="javascript:document.location='MapPage.php'">pin_drop</i></button>
+      <button style="margin-top: 18px" onclick="javascript:document.location='MainPage.php'"><i class="material-icons" style>home</i></button>
+      <button><i class="material-icons" onclick="javascript:document.location='ChartPage.php'">assessment</i></button>
+      <button><i class="material-icons" onclick="javascript:document.location='ListPage.php'">list</i></button>
+      <button><i class="material-icons" onclick="javascript:document.location='TimePage.php'">schedule</i></button>
+      <button><i class="material-icons" onclick="javascript:document.location='DangerPage.php'">warning</i></button>
+      <button><i class="material-icons" onclick="javascript:document.location='MapPage.php'">pin_drop</i></button>
     </h8>
   </div>
   <h1>Map</h1>
-  <h3>Enter location</h3>
-  <div>
-    <input type="text"></input>
-    <button><i class="material-icons">search</i></button>
-  </div>
+  <!-- <h3>Country</h3> -->
+  <form action = "<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method = POST>
+    <!-- <input type="text" name="location" value="<?php echo ifSetElseEmpty("location");?>"></input> -->
+    <!-- <button type="submit" name="search"><i class="material-icons">search</i></button> -->
+
   <div class="box">
   <h4>
-    <p style="margin-right: 7px; margin-top: 30px">Constraints</p>
-    <button><i class="material-icons">add</i></button>
-  </h4>
-  <h6>
-    <p> Constraint Type</p>
-    <select name="Attribute">
-      <option value="Time: before">Time: before</option>
-      <option value="Time: after">Time: after</option>
-      <option value="Location">Location</option>
-      <option value="Target">Target</option>
-    </select>
-    <p style="margin-left:9px"> Value</p>
-    <input type="text"></input>
-    <i class="material-icons blackmat">close</i>
-  </h6>
-  <h6 class="constraint">
-    <p> Constraint Type</p>
-    <select name="Attribute">
-      <option value="Time: before">Time: before</option>
-      <option value="Time: after">Time: after</option>
-      <option value="Location">Location</option>
-      <option value="Target">Target</option>
-    </select>
-    <p style="margin-left:9px"> Value</p>
-    <input type="text"></input>
-    <i class="material-icons blackmat">close</i>
-  </h6>
-  </div>
+    <p style="margin-right: 7px; margin-top: 30px">Search Criteria:
+    </p>
+    <form action = "<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method = post>
 
-  <div class="box" style="height:40em">
-  <h4>
-    <p style="margin-right: 7px; margin-top: 30px">Map</p>
-    <button><i class="material-icons">refresh</i></button>
+        <button type="submit" name="add_criteria"><i class="material-icons" >add</i></button>
+        <button type="submit" name="remove_criteria"><i class="material-icons" >remove</i></button>
+        <input type = "hidden" name = "criteria_count" value = "<?php print $criteria_count; ?>"; />
+        <button type="submit" name="search"><i class="material-icons">search</i></button>
+    </form>
   </h4>
-  <div class = "map">
+  </h6>
+
+     <?php
+        for($criteria_num=0; $criteria_num <= $criteria_count; $criteria_num++){
+          echo "<h6>
+            <p> Constraint Type</p>
+            <select name=\"attribute".$criteria_num."\">";
+
+          if(!session_id()) session_start();
+          include("global.php");
+          $allConstraintTypes = $_SESSION['allConstraintTypes'];
+          $oldValue = ifSetElseEmpty("attribute".$criteria_num);
+
+          foreach($allConstraintTypes as $attr){
+            echo "<option value=\"".$attr ."\"";
+            if($oldValue == $attr){
+              echo " selected ";
+            }
+            echo ">".$attr."</option>";
+          }
+
+
+          echo "</select>
+            <p style=\"margin-left:9px\"> Value</p>
+            <input type=\"text\" name=\"value".$criteria_num."\"";
+
+          echo "value=\"".ifSetElseEmpty("value".$criteria_num)."\"";
+
+          echo "></input>
+          </h6>";
+        }
+     ?>
+  </div>
+  </form>
+  <div class="box">
+  <h4>
+    <p style="margin-right: 7px; margin-top: 30px">
+      Map
+    </p>
+  </h4>
+    <div>
+    <div id="chart_div"></div>
+  </div>
   </div>
 
 </div>
