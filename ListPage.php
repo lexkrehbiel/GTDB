@@ -190,7 +190,7 @@
 
     class q {
       function output($statement){
-        $row = oci_fetch_object($statement);
+        //$row = oci_fetch_object($statement);
         while ($row = oci_fetch_object($statement)) {
             echo "<div class=\"listitem\">";
             echo "<h5>".($row->CITY).", ".($row->COUNTRY_TXT)."</h5>";
