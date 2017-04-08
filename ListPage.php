@@ -78,7 +78,7 @@
             $value = $_POST[$valStr];
             switch($attribute){
               case "Location":
-                $locationQuery = " AND (COUNTRY_TXT ='".$value."' OR CITY ='".$value."') ";
+                $locationQuery = " AND (UPPER(COUNTRY_TXT) = UPPER('".$value."') OR UPPER(CITY) = UPPER('".$value."') OR UPPER(PROV_STATE) = UPPER('".$value."') ) ";
                 break;
               case "Time: Before":
                 list($month,$day,$year) = explode('/', $value);
@@ -110,14 +110,17 @@
                 $hostageCountQuery = " AND NDAYS >= ".$value;
               break;
               case "Weapon":
-                $excessSets = $excessSets.", WEAPON_TYPE, EVENTS_WEAPONS";
-                $excessJoins = $excessJoins." AND EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID AND EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID ";
-                $weaponQuery = " AND WEAPON_TYPE_TXT LIKE '%".$value."%' ";
+                $excessSets = $excessSets.", WEAPON_TYPE, WEAPON_SUBTYPE, EVENTS_WEAPONS";
+                $excessJoins = $excessJoins." AND EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID AND EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID 
+				AND EVENTS_WEAPONS.WEAPON_SUBTYPE_ID = WEAPON_SUBTYPE.WEAPON_SUBTYPE_ID";
+                $weaponQuery = " AND (UPPER(WEAPON_TYPE_TXT) LIKE UPPER('%".$value."%') OR UPPER(WEAPON_SUBTYPE_TXT) LIKE UPPER('%".$value."%') )";
               break;
               case "Target":
-                $excessSets = $excessSets.", EVENTS_TARGETS, TARGETS";
-                $excessJoins = $excessJoins." AND EVENTS.EVENT_ID = EVENTS_TARGETS.EVENT_ID AND EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID";
-                $targetQuery = " AND TARGETS.TARGET LIKE '%".$value."%' ";
+                $excessSets = $excessSets.", EVENTS_TARGETS, TARGETS, TARGET_SUBTYPE, TARGET_TYPE";
+                $excessJoins = $excessJoins." AND EVENTS.EVENT_ID = EVENTS_TARGETS.EVENT_ID AND EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID
+				AND TARGETS.TYPE_ID = TARGET_TYPE.TYPE_ID AND TARGETS.SUBTYPE_ID = TARGET_SUBTYPE.SUBTYPE_ID";
+                $targetQuery = " AND (UPPER(TARGET_TYPE.TYPE_TXT) LIKE UPPER('%".$value."%') OR UPPER(TARGET_SUBTYPE.SUBTYPE_TXT) LIKE UPPER('%".$value."%')
+				OR UPPER(TARGETS.TARGET) LIKE UPPER('%".$value."%') )";
               break;
             }
 
@@ -187,7 +190,7 @@
 
     if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["search"])) {
 
-
+	
     class q {
       function output($statement){
         //$row = oci_fetch_object($statement);
@@ -223,7 +226,7 @@
     }
     include("include.php");
     $spec = new q;
-
+	
 
     $query = "SELECT DISTINCT * FROM EVENTS, LOCATIONS, COUNTRY "
               .$excessSets." WHERE EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID "
