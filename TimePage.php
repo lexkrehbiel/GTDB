@@ -10,15 +10,182 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <?php
+    $sets = array("EVENTS");
+    $joins = array();
+    $constraints = array();
+    $queries = array();
+    $resultsNum = 0;
+    $cat_type = "";
+    $startYear = 1970;
+    $endYear = 2015;
+
+    function ifSetElseEmpty($valueName){
+      if(isset($_POST[$valueName])){
+        return $_POST[$valueName];
+      } else {
+        return "";
+      }
+    }
+
+    $criteria_count = 0;
+    if($_SERVER["REQUEST_METHOD"] == "POST") {
+      $criteria_count = isset($_POST['criteria_count']) ? $_POST['criteria_count'] : 0;
+      if(isset($_POST["add_criteria"])){
+          $criteria_count++;
+      } else if(isset($_POST["remove_criteria"])){
+          $criteria_count--;
+      } else {
+
+
+        //process the other criteria
+        unset($_POST['Hostages']);
+
+        for($crit_proc = 0; $crit_proc<=$criteria_count; $crit_proc++){
+          $attrStr = "attribute".$crit_proc;
+          $valStr = "value".$crit_proc;
+
+
+          if(isset($_POST[$attrStr]) && isset($_POST[$valStr]) && strlen($_POST[$valStr])>0){
+            $attribute = $_POST[$attrStr];
+            $value = $_POST[$valStr];
+            switch($attribute){
+              case "Location":
+                $sets[] = "COUNTRY";
+                $sets[] = "LOCATIONS";
+                $joins[] = "EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID";
+                $joins[] = "LOCATIONS.COUNTRY_ID = COUNTRY.COUNTRY_ID";
+                $constraints[] = "(COUNTRY_TXT ='".$value."' OR CITY ='".$value."')";
+                break;
+              case "Time: Before":
+                list($month,$day,$year) = explode('/', $value);
+                $inputDate = 10000*$year+100*$month+$day;
+                $endYear = $year;
+                $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
+                $constraints[] = $dbDate." < ".$inputDate;
+                break;
+              case "Time: After":
+                list($month,$day,$year) = explode('/', $value);
+                $inputDate = 10000*$year+100*$month+$day;
+                $startYear = $year;
+                $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
+                $constraints[] = $dbDate." > ".$inputDate;
+                break;
+              case "Hostages: Number of":
+                $sets[] = "HOSTAGE_SITUATIONS";
+                $joins[] = "EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
+                $constraints[] = "NHOSTKID >= ".$value;
+              break;
+              case "Hostages: Days":
+                $sets[] = "HOSTAGE_SITUATIONS";
+                $joins[] = "EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
+                $constraints[] = "NDAYS >= ".$value;
+              break;
+              case "Weapon":
+                $sets[] = "WEAPON_TYPE";
+                $sets[] = "EVENTS_WEAPONS";
+                $joins[] = "EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID";
+                $joins[] = "EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID ";
+                $constraints[] = "WEAPON_TYPE_TXT LIKE '%".$value."%' ";
+              break;
+              case "Target":
+                $sets[] = "EVENTS_TARGETS";
+                $sets[] = "TARGETS";
+                $joins[] = "EVENTS.EVENT_ID = EVENTS_TARGETS.EVENT_ID";
+                $joins[] = "EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID";
+                $constraints[] = "TARGETS.TARGET LIKE '%".$value."%'";
+              break;
+            }
+
+          }
+        }
+    }
+    }
+
+    $allSets = " ";
+    $sets = array_unique($sets);
+    $count = count($sets);
+    foreach($sets as $set){
+      $allSets = $allSets.$set;
+      if(--$count > 0){
+        $allSets = $allSets.", ";
+      }
+    }
+
+    $allJoins = "";
+    $joins = array_merge($joins,$constraints);
+    $joins = array_unique($joins);
+    $count = count($joins);
+    if($count > 0){ $allJoins = " WHERE ";}
+    foreach($joins as $join){
+      $allJoins = $allJoins.$join;
+      if(--$count > 0){
+        $allJoins = $allJoins." AND ";
+      }
+    }
+
+    $axisName = "";
+
+    if($endYear - $startYear < 2){
+      $date = "IMONTH";
+      $axisName = "Month Number";
+    } else {
+      $date = "IYEAR";
+      $axisName = "Year";
+    }
+
+    $query = "SELECT ".$date." as VALUE, COUNT(*) as COUNT FROM"
+             .$allSets.$allJoins
+             ." GROUP BY ".$date." ORDER BY ".$date." ASC";
+  ?>
+
+  <script src="chartsPHP/lib/js/jquery.min.js"></script>
+  <script src="chartsPHP/lib/js/chartphp.js"></script>
+  <link rel="stylesheet" href="chartsPHP/lib/js/chartphp.css">
+  <!--Load the AJAX API-->
+      <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+      <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+      <script type="text/javascript">
+      // Load the Visualization API and the piechart package.
+    google.charts.load('current', {'packages':['corechart']});
+
+    // Set a callback to run when the Google Visualization API is loaded.
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+
+      var quer = "<?php echo $query; ?>";
+
+      var jsonData = $.ajax({
+          type: "POST",
+          data: {query: quer},
+          url: "getDateData.php",
+          dataType: "json",
+          async: false
+          }).responseText;
+
+          var materialOptions = {
+            hAxis: {title: "<?php echo $axisName;?>"},
+            vAxis: {title: "Number of Attacks"},
+            height: 480,
+
+          };
+
+
+      // Create our data table out of JSON data loaded from server.
+      var data = new google.visualization.DataTable(jsonData);
+
+      // Instantiate and draw our chart, passing in some options.
+      var chart = new google.visualization.LineChart(document.getElementById('linechart'));
+      chart.draw(data, materialOptions);
+
+    }
+    </script>
 </head>
 
 <body>
 
   <body>
-    <?php
-      $categories = array("Month","Attack Type","Weapon Type","Target Type","Country","City","Group","Success","Suicide")
-    ?>
-
   <div class = "container">
     <div style="text-align:center; margin-top:10px">
       <h8 class="menubar">
@@ -31,108 +198,6 @@
       </h8>
     </div>
     <h1>Time Chart</h1>
-
-    <?php
-      $locationQuery = "";
-      $timeQueryBefore = "";
-      $timeQueryAfter = "";
-      $keywordQuery = "";
-      $allConstraints = "";
-      $excessSets = "";
-      $excessJoins = "";
-      $resultsNum = 0;
-      $hostageCountQuery = "";
-      $hostageLengthQuery = "";
-      $weaponQuery = "";
-      $targetQuery = "";
-
-      function ifSetElseEmpty($valueName){
-        if(isset($_POST[$valueName])){
-          return $_POST[$valueName];
-        } else {
-          return "";
-        }
-      }
-
-      $criteria_count = 0;
-      if($_SERVER["REQUEST_METHOD"] == "POST") {
-        $criteria_count = isset($_POST['criteria_count']) ? $_POST['criteria_count'] : 0;
-        if(isset($_POST["add_criteria"])){
-            $criteria_count++;
-        } else if(isset($_POST["remove_criteria"])){
-            $criteria_count--;
-        } else {
-
-          //process the keyword
-          if(isset($_POST['keyword'])){
-            $keywordQuery = " AND EVENTS.SUMMARY_TXT LIKE '%".$_POST['keyword']."%' ";
-          } else {
-            $keywordQuery = "";
-          }
-
-          //process the other criteria
-          unset($_POST['Hostages']);
-
-          for($crit_proc = 0; $crit_proc<=$criteria_count; $crit_proc++){
-            $attrStr = "attribute".$crit_proc;
-            $valStr = "value".$crit_proc;
-
-
-            if(isset($_POST[$attrStr]) && isset($_POST[$valStr]) && strlen($_POST[$valStr])>0){
-              $attribute = $_POST[$attrStr];
-              $value = $_POST[$valStr];
-              switch($attribute){
-                case "Location":
-                  $locationQuery = " AND (COUNTRY_TXT ='".$value."' OR CITY ='".$value."') ";
-                  break;
-                case "Time: Before":
-                  list($month,$day,$year) = explode('/', $value);
-                  $inputDate = 10000*$year+100*$month+$day;
-                  $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
-                  $timeQueryBefore = " AND ".$dbDate." < ".$inputDate;
-                  break;
-                case "Time: After":
-                  list($month,$day,$year) = explode('/', $value);
-                  $inputDate = 10000*$year+100*$month+$day;
-                  $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
-                  $timeQueryAfter = " AND ".$dbDate." > ".$inputDate;
-                  break;
-                case "Hostages: Number of":
-                  if(!isset($_POST['Hostages'])){
-                    $excessSets = $excessSets.", HOSTAGE_SITUATIONS";
-                    $excessJoins = $excessJoins." AND EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
-                  }
-                  $_POST['Hostages'] = 'yes';
-                  $excessJoins = $excessJoins." AND EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
-                  $hostageCountQuery = " AND NHOSTKID >= ".$value;
-                break;
-                case "Hostages: Days":
-                  if(!isset($_POST['Hostages'])){
-                    $excessSets = $excessSets.", HOSTAGE_SITUATIONS";
-                    $excessJoins = $excessJoins." AND EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
-                  }
-                  $_POST['Hostages'] = 'yes';
-                  $hostageCountQuery = " AND NDAYS >= ".$value;
-                break;
-                case "Weapon":
-                  $excessSets = $excessSets.", WEAPON_TYPE, EVENTS_WEAPONS";
-                  $excessJoins = $excessJoins." AND EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID AND EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID ";
-                  $weaponQuery = " AND WEAPON_TYPE_TXT LIKE '%".$value."%' ";
-                break;
-                case "Target":
-                  $excessSets = $excessSets.", EVENTS_TARGETS, TARGETS";
-                  $excessJoins = $excessJoins." AND EVENTS.EVENT_ID = EVENTS_TARGETS.EVENT_ID AND EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID";
-                  $targetQuery = " AND TARGETS.TARGET LIKE '%".$value."%' ";
-                break;
-              }
-
-            }
-          }
-          $allConstraints = $keywordQuery.$timeQueryBefore.$timeQueryAfter.$hostageCountQuery.$locationQuery.$weaponQuery.$targetQuery;
-        }
-      }
-
-    ?>
     <form action = "<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method = POST>
 
     <div class="box">
@@ -186,7 +251,7 @@
   <h4>
     <p style="margin-right: 7px; margin-top: 30px">Graph</p>
   </h4>
-  <div class = "linechart">
+  <div id="linechart">
   </div>
 
 </div>
