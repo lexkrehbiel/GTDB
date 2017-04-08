@@ -140,7 +140,7 @@ $out = $p->render('c1');
                 $sets[] = "LOCATIONS";
                 $joins[] = "EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID";
                 $joins[] = "LOCATIONS.COUNTRY_ID = COUNTRY.COUNTRY_ID";
-                $constraints[] = "(COUNTRY_TXT ='".$value."' OR CITY ='".$value."')";
+                $constraints[] = "(UPPER(COUNTRY_TXT) =UPPER('".$value."') OR UPPER(CITY) = UPPER('".$value."') OR UPPER(PROV_STATE) = UPPER('".$value."'))";
                 break;
               case "Time: Before":
                 list($month,$day,$year) = explode('/', $value);
@@ -169,14 +169,14 @@ $out = $p->render('c1');
                 $sets[] = "EVENTS_WEAPONS";
                 $joins[] = "EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID";
                 $joins[] = "EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID ";
-                $constraints[] = "WEAPON_TYPE_TXT LIKE '%".$value."%' ";
+                $constraints[] = "UPPER(WEAPON_TYPE_TXT) LIKE UPPER('%".$value."%') ";
               break;
               case "Target":
                 $sets[] = "EVENTS_TARGETS";
                 $sets[] = "TARGETS";
                 $joins[] = "EVENTS.EVENT_ID = EVENTS_TARGETS.EVENT_ID";
                 $joins[] = "EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID";
-                $constraints[] = "TARGETS.TARGET LIKE '%".$value."%'";
+                $constraints[] = "UPPER(TARGETS.TARGET) LIKE UPPER('%".$value."%')";
               break;
             }
 
@@ -342,7 +342,7 @@ $out = $p->render('c1');
     <p style="margin-right: 7px; margin-top: 30px">
       <?php
         if(isset($_POST['bar_attribute'])){
-          echo $_POST['bar_attribute'];
+          echo "Breakdown of attacks by " . $_POST['bar_attribute'];
         } else {
           echo "Graph";
         }
