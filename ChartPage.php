@@ -31,67 +31,13 @@ $out = $p->render('c1');
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-  <script src="chartsPHP/lib/js/jquery.min.js"></script>
-  <script src="chartsPHP/lib/js/chartphp.js"></script>
-  <link rel="stylesheet" href="chartsPHP/lib/js/chartphp.css">
-  <!--Load the AJAX API-->
-      <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-      <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-      <script type="text/javascript">
-      // Load the Visualization API and the piechart package.
-    google.charts.load('current', {'packages':['corechart']});
-
-    // Set a callback to run when the Google Visualization API is loaded.
-    google.charts.setOnLoadCallback(drawChart);
-
-    function drawChart() {
-      var jsonData = $.ajax({
-          url: "getData.php",
-          dataType: "json",
-          async: false
-          }).responseText;
-
-      // Create our data table out of JSON data loaded from server.
-      var data = new google.visualization.DataTable(jsonData);
-
-      // Instantiate and draw our chart, passing in some options.
-      var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
-      chart.draw(data, {width: 800, height: 480});
-    }
-    </script>
-</head>
-
-<body>
   <?php
-    $categories = array("Month","Attack Type","Weapon Type","Target Type","Country","City","Group","Success","Suicide")
-  ?>
-
-<div class = "container">
-  <div style="text-align:center; margin-top:10px">
-    <h8 class="menubar">
-      <button style="margin-top: 18px" onclick="javascript:document.location='MainPage.php'"><i class="material-icons" style>home</i></button>
-      <button><i class="material-icons" onclick="javascript:document.location='ChartPage.php'">assessment</i></button>
-      <button><i class="material-icons" onclick="javascript:document.location='ListPage.php'">list</i></button>
-      <button><i class="material-icons" onclick="javascript:document.location='TimePage.php'">schedule</i></button>
-      <button><i class="material-icons" onclick="javascript:document.location='DangerPage.php'">warning</i></button>
-      <button><i class="material-icons" onclick="javascript:document.location='MapPage.php'">pin_drop</i></button>
-    </h8>
-  </div>
-  <h1>Bar Chart</h1>
-  <h3>Category to Compare</h3>
-  <?php
-    $locationQuery = "";
-    $timeQueryBefore = "";
-    $timeQueryAfter = "";
-    $keywordQuery = "";
-    $allConstraints = "";
-    $excessSets = "";
-    $excessJoins = "";
+    $sets = array("EVENTS");
+    $joins = array();
+    $constraints = array();
+    $queries = array();
     $resultsNum = 0;
-    $hostageCountQuery = "";
-    $hostageLengthQuery = "";
-    $weaponQuery = "";
-    $targetQuery = "";
+    $cat_type = "";
 
     function ifSetElseEmpty($valueName){
       if(isset($_POST[$valueName])){
@@ -111,10 +57,70 @@ $out = $p->render('c1');
       } else {
 
         //process the keyword
-        if(isset($_POST['keyword'])){
-          $keywordQuery = " AND EVENTS.SUMMARY_TXT LIKE '%".$_POST['keyword']."%' ";
-        } else {
-          $keywordQuery = "";
+        if(isset($_POST['bar_attribute'])){
+          $cat_type = $_POST['bar_attribute'];
+          switch($_POST['bar_attribute']){
+            case "Weapon Type":
+              $cat_type = "WEAPON_TYPE_TXT";
+              $sets[] = "WEAPON_TYPE";
+              $sets[] = "EVENTS_WEAPONS";
+              $joins[] = "EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID";
+              $joins[] = "EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID";
+            break;
+            case "Target Type":
+              $cat_type = "TYPE_TXT";
+              $sets[] = "TARGET_TYPE";
+              $sets[] = "TARGETS";
+              $sets[] = "EVENTS_TARGETS";
+              $joins[] = "EVENTS.EVENT_ID = EVENTS_TARGETS.EVENT_ID";
+              $joins[] = "EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID";
+              $joins[] = "TARGETS.TYPE_ID = TARGET_TYPE.TYPE_ID";
+            break;
+            case "Country":
+              $cat_type = "COUNTRY_TXT";
+              $sets[] = "LOCATIONS";
+              $sets[] = "COUNTRY";
+              $joins[] = "EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID";
+              $joins[] = "LOCATIONS.COUNTRY_ID = COUNTRY.COUNTRY_ID";
+            break;
+            case "Attack Type":
+              $cat_type = "ATTACK_TYPE_TXT";
+              $sets[] = "EVENTS_ATTACK_TYPES";
+              $sets[] = "ATTACK_TYPES";
+              $joins[] = "EVENTS.EVENT_ID = EVENTS_ATTACK_TYPES.EVENT_ID";
+              $joins[] = "EVENTS_ATTACK_TYPES.ATTACK_TYPE_ID = ATTACK_TYPES.ATTACK_TYPE_ID";
+            break;
+            case "Month":
+              $cat_type = "WORD";
+              $sets[] = "MONTH_WORDS";
+              $joins[] = "MONTH_WORDS.VAL = IMONTH";
+            break;
+            case "Group":
+              $cat_type = "GROUP_NAME";
+              $sets[] = "EVENTS_GROUPS";
+              $sets[] = "GROUPS";
+              $joins[] = "EVENTS.EVENT_ID = EVENTS_GROUPS.EVENT_ID";
+              $joins[] = "EVENTS_GROUPS.GROUP_ID = GROUPS.GROUP_ID";
+              $constraints[] = "ROWNUM < 3435";
+            break;
+            case "City":
+              $cat_type = "CITY";
+              $sets[] = "LOCATIONS";
+              $joins[] = "EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID";
+            break;
+            case "Success of Attack":
+              $cat_type = "WORD";
+              $sets[] = "YES_NO";
+              $joins[] = "SUCCESSFUL_ATTACK = YES_NO.VAL";
+            break;
+            case "Suicide":
+              $cat_type = "WORD";
+              $sets[] = "YES_NO";
+              $joins[] = "SUICIDE = YES_NO.VAL";
+            break;
+            default:
+              $cat_type = "SUCCESSFUL_ATTACK";
+          }
         }
 
         //process the other criteria
@@ -130,56 +136,146 @@ $out = $p->render('c1');
             $value = $_POST[$valStr];
             switch($attribute){
               case "Location":
-                $locationQuery = " AND (COUNTRY_TXT ='".$value."' OR CITY ='".$value."') ";
+                $sets[] = "COUNTRY";
+                $sets[] = "LOCATIONS";
+                $joins[] = "EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID";
+                $joins[] = "LOCATIONS.COUNTRY_ID = COUNTRY.COUNTRY_ID";
+                $constraints[] = "(COUNTRY_TXT ='".$value."' OR CITY ='".$value."')";
                 break;
               case "Time: Before":
                 list($month,$day,$year) = explode('/', $value);
                 $inputDate = 10000*$year+100*$month+$day;
                 $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
-                $timeQueryBefore = " AND ".$dbDate." < ".$inputDate;
+                $constraints[] = $dbDate." < ".$inputDate;
                 break;
               case "Time: After":
                 list($month,$day,$year) = explode('/', $value);
                 $inputDate = 10000*$year+100*$month+$day;
                 $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
-                $timeQueryAfter = " AND ".$dbDate." > ".$inputDate;
+                $constraints[] = $dbDate." > ".$inputDate;
                 break;
               case "Hostages: Number of":
-                if(!isset($_POST['Hostages'])){
-                  $excessSets = $excessSets.", HOSTAGE_SITUATIONS";
-                  $excessJoins = $excessJoins." AND EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
-                }
-                $_POST['Hostages'] = 'yes';
-                $excessJoins = $excessJoins." AND EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
-                $hostageCountQuery = " AND NHOSTKID >= ".$value;
+                $sets[] = "HOSTAGE_SITUATIONS";
+                $joins[] = "EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
+                $constraints[] = "NHOSTKID >= ".$value;
               break;
               case "Hostages: Days":
-                if(!isset($_POST['Hostages'])){
-                  $excessSets = $excessSets.", HOSTAGE_SITUATIONS";
-                  $excessJoins = $excessJoins." AND EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
-                }
-                $_POST['Hostages'] = 'yes';
-                $hostageCountQuery = " AND NDAYS >= ".$value;
+                $sets[] = "HOSTAGE_SITUATIONS";
+                $joins[] = "EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
+                $constraints[] = "NDAYS >= ".$value;
               break;
               case "Weapon":
-                $excessSets = $excessSets.", WEAPON_TYPE, EVENTS_WEAPONS";
-                $excessJoins = $excessJoins." AND EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID AND EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID ";
-                $weaponQuery = " AND WEAPON_TYPE_TXT LIKE '%".$value."%' ";
+                $sets[] = "WEAPON_TYPE";
+                $sets[] = "EVENTS_WEAPONS";
+                $joins[] = "EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID";
+                $joins[] = "EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID ";
+                $constraints[] = "WEAPON_TYPE_TXT LIKE '%".$value."%' ";
               break;
               case "Target":
-                $excessSets = $excessSets.", EVENTS_TARGETS, TARGETS";
-                $excessJoins = $excessJoins." AND EVENTS.EVENT_ID = EVENTS_TARGETS.EVENT_ID AND EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID";
-                $targetQuery = " AND TARGETS.TARGET LIKE '%".$value."%' ";
+                $sets[] = "EVENTS_TARGETS";
+                $sets[] = "TARGETS";
+                $joins[] = "EVENTS.EVENT_ID = EVENTS_TARGETS.EVENT_ID";
+                $joins[] = "EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID";
+                $constraints[] = "TARGETS.TARGET LIKE '%".$value."%'";
               break;
             }
 
           }
         }
-        $allConstraints = $keywordQuery.$timeQueryBefore.$timeQueryAfter.$hostageCountQuery.$locationQuery.$weaponQuery.$targetQuery;
+
+        //$allConstraints = $keywordQuery.$timeQueryBefore.$timeQueryAfter.$hostageCountQuery.$locationQuery.$weaponQuery.$targetQuery;
       }
     }
 
+    $allSets = " ";
+    $sets = array_unique($sets);
+    $count = count($sets);
+    foreach($sets as $set){
+      $allSets = $allSets.$set;
+      if(--$count > 0){
+        $allSets = $allSets.", ";
+      }
+    }
+
+    $allJoins = "";
+    $joins = array_unique($joins);
+    $count = count($joins);
+    if($count > 0){ $allJoins = " WHERE ";}
+    foreach($joins as $join){
+      $allJoins = $allJoins.$join;
+      if(--$count > 0){
+        $allJoins = $allJoins." AND ";
+      }
+    }
+
+    $allConstraints = "";
+    $constraints = array_unique($constraints);
+    $count = count($constraints);
+    foreach($constraints as $constraint){
+      $allConstraints = " AND ".$constraint.$allConstraints;
+    }
+    // //$cat_type = "weapon_type_txt";
+    $query = "SELECT ".$cat_type." as VALUE, COUNT(".$cat_type.") as COUNT FROM"
+             .$allSets.$allJoins.$allConstraints
+             ." GROUP BY ".$cat_type
+             ." ORDER BY COUNT DESC";
   ?>
+  <script src="chartsPHP/lib/js/jquery.min.js"></script>
+  <script src="chartsPHP/lib/js/chartphp.js"></script>
+  <link rel="stylesheet" href="chartsPHP/lib/js/chartphp.css">
+  <!--Load the AJAX API-->
+      <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+      <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+      <script type="text/javascript">
+      // Load the Visualization API and the piechart package.
+    google.charts.load('current', {'packages':['corechart']});
+
+    // Set a callback to run when the Google Visualization API is loaded.
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+
+      var quer = "<?php echo $query; ?>";
+
+      var jsonData = $.ajax({
+          type: "POST",
+          data: {query: quer},
+          url: "getData.php",
+          dataType: "json",
+          async: false
+          }).responseText;
+
+      // Create our data table out of JSON data loaded from server.
+      var data = new google.visualization.DataTable(jsonData);
+
+      // Instantiate and draw our chart, passing in some options.
+      var piechart = new google.visualization.PieChart(document.getElementById('piechart_div'));
+      piechart.draw(data, {height: 480});
+
+      var colchart = new google.visualization.ColumnChart(document.getElementById('colchart_div'));
+      colchart.draw(data, {height: 480});
+    }
+    </script>
+</head>
+
+<body>
+  <?php
+    $categories = array("Month","Attack Type","Weapon Type","Target Type","Country","City","Group","Success of Attack","Suicide")
+  ?>
+
+<div class = "container">
+  <div style="text-align:center; margin-top:10px">
+    <h8 class="menubar">
+      <button style="margin-top: 18px" onclick="javascript:document.location='MainPage.php'"><i class="material-icons" style>home</i></button>
+      <button><i class="material-icons" onclick="javascript:document.location='ChartPage.php'">assessment</i></button>
+      <button><i class="material-icons" onclick="javascript:document.location='ListPage.php'">list</i></button>
+      <button><i class="material-icons" onclick="javascript:document.location='TimePage.php'">schedule</i></button>
+      <button><i class="material-icons" onclick="javascript:document.location='DangerPage.php'">warning</i></button>
+      <button><i class="material-icons" onclick="javascript:document.location='MapPage.php'">pin_drop</i></button>
+    </h8>
+  </div>
+  <h1>Charts</h1>
+  <h3>Category to Compare</h3>
   <form action = "<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method = POST>
     <select type="text" name="bar_attribute">
     <?php
@@ -241,11 +337,22 @@ $out = $p->render('c1');
      ?>
   </div>
   </form>
-  <div class="box" style="height:40em">
+  <div class="box">
   <h4>
-    <p style="margin-right: 7px; margin-top: 30px">Graph</p>
+    <p style="margin-right: 7px; margin-top: 30px">
+      <?php
+        if(isset($_POST['bar_attribute'])){
+          echo $_POST['bar_attribute'];
+        } else {
+          echo "Graph";
+        }
+      ?>
+    </p>
   </h4>
-    <div id="chart_div"></div>
+    <div>
+    <div id="piechart_div"></div>
+    <div id="colchart_div"></div>
+  </div>
   </div>
 
 </div>
