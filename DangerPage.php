@@ -39,7 +39,7 @@
     }
     if($_SERVER["REQUEST_METHOD"] == "POST") {
 	  $city = $_POST["location"];
-	  $city = str_replace(" ","%",$city); // Replace spaces with % so it works with the API
+	  $city = str_replace(" ","%20",$city); // Replace spaces with %20 (ASCII space) so it works with the API
 	  
 	  //Find latitude and longitude
 	  $url = "http://maps.googleapis.com/maps/api/geocode/json?address=$city";
