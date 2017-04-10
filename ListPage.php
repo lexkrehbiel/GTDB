@@ -242,6 +242,11 @@
 					echo "<p><b>Property Damage: </b> Unknown";
 				}
 			}
+			echo "<br>";
+			
+			// THIS LINE OPENS THE EVENT_ID SPECIFIC PAGE
+			echo "<a href='#;' class='button' onclick=\"window.open('getEvent.php?q=" . $row->EVENT_ID . "')\">See more info...</a>";
+
             echo "</p>";
             echo "</div>"; //collapsible info
 			echo "</div>"; //listitem container
