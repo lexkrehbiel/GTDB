@@ -24,6 +24,13 @@ input {
   margin-top: 10px;
 }
 
+.box2 {
+  background-color: #e8e8e8;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
 .menubar {
   padding: 10px;
   border-radius: 5px;
