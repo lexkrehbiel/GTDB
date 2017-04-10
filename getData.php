@@ -16,9 +16,9 @@ oci_execute($statement);
 $json = file_get_contents("skeleton.json");
 //var_dump($statement);
 //$r = oci_fetch_object($statement);
-//while($r = oci_fetch_object($statement)) {
-for ($i = 0; $i < 3000; $i++){ // so that it doesn't try to graph tens of thousands of cities
-	if ($r = oci_fetch_object($statement)){
+while($r = oci_fetch_object($statement)) {
+//for ($i = 0; $i < 3000; $i++){ // so that it doesn't try to graph tens of thousands of cities
+	//if ($r = oci_fetch_object($statement)){
   //var_dump($r);
     //get WEAPON_TYPE_TXT and COUNT from $r, then put into $json
     $json = $json."{\"c\":[{\"v\":\"";
@@ -26,7 +26,7 @@ for ($i = 0; $i < 3000; $i++){ // so that it doesn't try to graph tens of thousa
     $json = $json."\",\"f\":null},{\"v\":";
     $json = $json.($r->COUNT);
     $json = $json.",\"f\":null}]}, ";
-	}
+	//}
 }
 $json = substr($json, 0, -2);
 $json = $json." ] }";
