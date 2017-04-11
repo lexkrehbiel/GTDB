@@ -186,6 +186,9 @@
               if(isset($row->TARGET)){
                 echo "<p>Target: ".$row->TARGET;
               }
+			  
+			  echo "<p><a href='#;' class='button' onclick=\"window.open('getEvent.php?q=" . $row->EVENT_ID . "')\">See more info...</a></p>";
+
               echo "</p>";
               echo "</div>";
           }
