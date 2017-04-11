@@ -52,9 +52,9 @@ $out = $p->render('c1');
     $criteria_count = 0;
     if($_SERVER["REQUEST_METHOD"] == "POST") {
       $criteria_count = isset($_POST['criteria_count']) ? $_POST['criteria_count'] : 0;
-      if(isset($_POST["add_criteria"])){
+      if(isset($_POST["add_criteria"])&& $criteria_count<9){
           $criteria_count++;
-      } else if(isset($_POST["remove_criteria"])){
+      } else if(isset($_POST["remove_criteria"]) && $criteria_count>0){
           $criteria_count--;
       } else {
 
@@ -274,9 +274,6 @@ $out = $p->render('c1');
 
 
   ?>
-  <script src="chartsPHP/lib/js/jquery.min.js"></script>
-  <script src="chartsPHP/lib/js/chartphp.js"></script>
-  <link rel="stylesheet" href="chartsPHP/lib/js/chartphp.css">
   <!--Load the AJAX API-->
       <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
       <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>

@@ -210,8 +210,10 @@
               $summary = $summary."\nProperty Damage: Unknown";
             }
           }
+		  
+		  $summary = $summary . "<br><a href='#;' class='button' onclick=\"window.open('getEvent.php?q=" . $row->EVENT_ID . "')\">See more info...</a>";
 
-
+		  
           $array[] = array($row->LATITUDE,$row->LONGITUDE,$summary);
         }
 
@@ -328,7 +330,9 @@
   <div class="box2">
   <h4>
     <p style="margin-right: 7px; margin-top: 30px">
-      Map
+	<?php
+      echo "Map of events " . substr($criteria_txt, 1);
+	  ?>
     </p>
   </h4>
     <div id="chart_div"></div>
