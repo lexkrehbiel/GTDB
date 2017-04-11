@@ -61,40 +61,58 @@
                 $constraints[] = "(UPPER(COUNTRY_TXT) =UPPER('".$value."') OR UPPER(CITY) = UPPER('".$value."') OR UPPER(PROV_STATE) = UPPER('".$value."'))";
 				$criteria_txt = $criteria_txt . ", in " .$value;
                 break;
-              case "Time: Before":
-                  if (preg_match("/^\d{1,2}\-\d{1,2}\-\d{4}$/", $value)) {
-                      list($month,$day,$year) = explode('-', $value);
-                  }
-                  if (preg_match("/^\d{1,2}\/\d{1,2}\/\d{4}$/", $value)) {
-                      list($month,$day,$year) = explode('/', $value);
-                  }
-                  if($value >= 1970 && $value <= 2015) {
-                      $month = 01;
-                      $day = 01;
-                      $year = $value;
-                  }
-                $inputDate = 10000*$year+100*$month+$day;
-                $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
-                $constraints[] = $dbDate." < ".$inputDate;
-				$criteria_txt = $criteria_txt . ", before " .$value ;
-                break;
-              case "Time: After":
-              if (preg_match("/^\d{1,2}\-\d{1,2}\-\d{4}$/", $value)) {
-                  list($month,$day,$year) = explode('-', $value);
-              }
-              if (preg_match("/^\d{1,2}\/\d{1,2}\/\d{4}$/", $value)) {
-                  list($month,$day,$year) = explode('/', $value);
-              }
-              if($value >= 1970 && $value <= 2015) {
-                  $month = 01;
-                  $day = 01;
-                  $year = $value;
-              }
-                $inputDate = 10000*$year+100*$month+$day;
-                $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
-                $constraints[] = $dbDate." > ".$inputDate;
-				$criteria_txt = $criteria_txt . ", after " .$value ;
-                break;
+                case "Time: Before":
+                        $valid = false;
+                        if (preg_match("/^\d{1,2}\-\d{1,2}\-\d{4}$/", $value)) {
+                            list($month,$day,$year) = explode('-', $value);
+                            $valid = true;
+                        }
+                        else if (preg_match("/^\d{1,2}\/\d{1,2}\/\d{4}$/", $value)) {
+                            list($month,$day,$year) = explode('/', $value);
+                            $valid = true;
+                        }
+                        else if($value >= 1970 && $value <= 2015) {
+                            $month = 01;
+                            $day = 01;
+                            $year = $value;
+                            $valid = true;
+                        }
+                        if(!$valid) {
+                            echo "<script type='text/javascript'>alert('Invalid date!')</script>";
+                        }
+                        else {
+                            $inputDate = 10000*$year+100*$month+$day;
+                            $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
+                            $constraints[] = $dbDate." < ".$inputDate;
+        				    $criteria_txt = $criteria_txt . ", before " .$value ;
+                        }
+                        break;
+                      case "Time: After":
+                        $valid = false;
+                        if (preg_match("/^\d{1,2}\-\d{1,2}\-\d{4}$/", $value)) {
+                            list($month,$day,$year) = explode('-', $value);
+                            $valid = true;
+                        }
+                        else if (preg_match("/^\d{1,2}\/\d{1,2}\/\d{4}$/", $value)) {
+                            list($month,$day,$year) = explode('/', $value);
+                            $valid = true;
+                        }
+                        else if($value >= 1970 && $value <= 2015) {
+                            $month = 01;
+                            $day = 01;
+                            $year = $value;
+                            $valid = true;
+                        }
+                        if(!$valid) {
+                            echo "<script type='text/javascript'>alert('Invalid date!')</script>";
+                        }
+                        else {
+                            $inputDate = 10000*$year+100*$month+$day;
+                            $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
+                            $constraints[] = $dbDate." > ".$inputDate;
+        				    $criteria_txt = $criteria_txt . ", after " .$value ;
+                        }
+                        break;
               case "Hostages: Number of":
                 $sets[] = "HOSTAGE_SITUATIONS";
                 $joins[] = "EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
