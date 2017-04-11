@@ -246,7 +246,10 @@
 
 <div class="box">
   <h4>
-    <p style="margin-right: 7px; margin-top: 30px">Search Results
+    <p style="margin-right: 7px; margin-top: 30px">
+	<?php 
+	echo "Search Results"  . substr($criteria_txt,1) . ":";
+	?>
       </p>
   </h4>
   <?php

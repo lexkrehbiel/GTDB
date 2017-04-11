@@ -37,16 +37,16 @@
           $criteria_count--;
       } else {
 
-
         //process the other criteria
         unset($_POST['Hostages']);
-
+		$criteria_txt = ""; // Keep track of this to display more information in our graph header
+		
         for($crit_proc = 0; $crit_proc<=$criteria_count; $crit_proc++){
           $attrStr = "attribute".$crit_proc;
           $valStr = "value".$crit_proc;
 
-
-          if(isset($_POST[$attrStr]) && isset($_POST[$valStr]) && strlen($_POST[$valStr])>0){
+		  // For every criteria and value, add the necessary sets, joins, and constraints
+          if(isset($_POST[$attrStr]) && !empty($_POST[$valStr])){
             $attribute = $_POST[$attrStr];
             $value = $_POST[$valStr];
             switch($attribute){
@@ -55,45 +55,76 @@
                 $sets[] = "LOCATIONS";
                 $joins[] = "EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID";
                 $joins[] = "LOCATIONS.COUNTRY_ID = COUNTRY.COUNTRY_ID";
-                $constraints[] = "(COUNTRY_TXT ='".$value."' OR CITY ='".$value."')";
+                $constraints[] = "(UPPER(COUNTRY_TXT) =UPPER('".$value."') OR UPPER(CITY) = UPPER('".$value."') OR UPPER(PROV_STATE) = UPPER('".$value."'))";
+				$criteria_txt = $criteria_txt . ", in " .$value;
                 break;
               case "Time: Before":
                 list($month,$day,$year) = explode('/', $value);
                 $inputDate = 10000*$year+100*$month+$day;
-                $endYear = $year;
                 $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
                 $constraints[] = $dbDate." < ".$inputDate;
+				$criteria_txt = $criteria_txt . ", before " .$value ;
                 break;
               case "Time: After":
                 list($month,$day,$year) = explode('/', $value);
                 $inputDate = 10000*$year+100*$month+$day;
-                $startYear = $year;
                 $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
                 $constraints[] = $dbDate." > ".$inputDate;
+				$criteria_txt = $criteria_txt . ", after " .$value ;				
                 break;
               case "Hostages: Number of":
                 $sets[] = "HOSTAGE_SITUATIONS";
                 $joins[] = "EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
                 $constraints[] = "NHOSTKID >= ".$value;
+				$criteria_txt = $criteria_txt . ", with " .$value ." or more hostage(s)";
               break;
               case "Hostages: Days":
                 $sets[] = "HOSTAGE_SITUATIONS";
                 $joins[] = "EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
                 $constraints[] = "NDAYS >= ".$value;
+				$criteria_txt = $criteria_txt . ", where hostages were kept for " .$value. " day(s) or more";
+				
               break;
               case "Weapon":
                 $sets[] = "WEAPON_TYPE";
+				$sets[] = "WEAPON_SUBTYPE";
                 $sets[] = "EVENTS_WEAPONS";
                 $joins[] = "EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID";
                 $joins[] = "EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID ";
-                $constraints[] = "WEAPON_TYPE_TXT LIKE '%".$value."%' ";
+				$joins[] = "EVENTS_WEAPONS.WEAPON_SUBTYPE_ID = WEAPON_SUBTYPE.WEAPON_SUBTYPE_ID ";
+                $constraints[] = "(UPPER(WEAPON_TYPE_TXT) LIKE UPPER('%".$value."%') 
+								OR UPPER(WEAPON_SUBTYPE_TXT) LIKE UPPER('%".$value."%'))";
+				$criteria_txt = $criteria_txt . ", committed with (a) " .$value;				
+
               break;
               case "Target":
                 $sets[] = "EVENTS_TARGETS";
                 $sets[] = "TARGETS";
+				$sets[] = "TARGET_TYPE";
+				$sets[] = "TARGET_SUBTYPE";
                 $joins[] = "EVENTS.EVENT_ID = EVENTS_TARGETS.EVENT_ID";
                 $joins[] = "EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID";
-                $constraints[] = "TARGETS.TARGET LIKE '%".$value."%'";
+				$joins[] = "TARGETS.TYPE_ID = TARGET_TYPE.TYPE_ID";
+                $joins[] = "TARGETS.SUBTYPE_ID = TARGET_SUBTYPE.SUBTYPE_ID";
+                $constraints[] = "(UPPER(TARGETS.TARGET) LIKE UPPER('%".$value."%') 
+								OR UPPER(TYPE_TXT) LIKE UPPER('%".$value."%') 
+								OR UPPER(SUBTYPE_TXT) LIKE UPPER('%".$value."%'))";
+				$criteria_txt = $criteria_txt . ", targeting " .$value ;				
+			  break;
+			  case "Casualties":
+				$constraints[] = "(N_KILL+N_WOUND)>=".$value;
+				$criteria_txt = $criteria_txt . ", with " .$value ." or more casualties";				
+			  break;
+			  case "Groups":
+				$sets[] = "EVENTS_GROUPS";
+				$sets[] = "GROUPS";
+				$sets[] = "GROUP_SUBNAMES";
+				$joins[] = "EVENTS.EVENT_ID = EVENTS_GROUPS.EVENT_ID";
+				$joins[] = "EVENTS_GROUPS.GROUP_ID = GROUPS.GROUP_ID";
+				$joins[] = "EVENTS_GROUPS.GROUP_SUBNAME_ID = GROUP_SUBNAMES.GROUP_SUBNAME_ID";
+				$constraints[] = "(UPPER(GROUP_NAME) LIKE UPPER('%".$value."%') 
+								OR UPPER(GROUP_SUBNAME) LIKE UPPER('%".$value."%'))";
+				$criteria_txt = $criteria_txt . ", committed by " .$value ;				
               break;
             }
 
@@ -249,7 +280,11 @@
 
   <div class="box" style="height:40em">
   <h4>
-    <p style="margin-right: 7px; margin-top: 30px">Graph</p>
+    <p style="margin-right: 7px; margin-top: 30px">
+	<?php 
+	echo "Breakdown of attacks " . substr($criteria_txt,1);
+	?>
+	</p>
   </h4>
   <div id="linechart">
   </div>
