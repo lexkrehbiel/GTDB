@@ -220,7 +220,7 @@ $out = $p->render('c1');
 
           }
         }
-      }
+      
 
 
     $allSets = " ";
@@ -272,7 +272,7 @@ $out = $p->render('c1');
              $_POST['ready'] = "yes";
 
          }
-
+	}
 
   ?>
   <!--Load the AJAX API-->
