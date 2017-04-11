@@ -39,6 +39,7 @@ $out = $p->render('c1');
     $resultsNum = 0;
     $cat_type = "";
     $array = array(array("Type","Count"));
+    $criteria_txt = "";
 
     function ifSetElseEmpty($valueName){
       if(isset($_POST[$valueName])){
