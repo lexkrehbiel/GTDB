@@ -295,7 +295,7 @@ $out = $p->render('c1');
       piechart.draw(data, {height: 480});
 
       var colchart = new google.visualization.ColumnChart(document.getElementById('colchart_div'));
-      colchart.draw(data, {height: 480});
+      colchart.draw(data, {height: 480, series: {0: {color: 'orange'}}});
     }
     }
     </script>
