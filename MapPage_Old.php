@@ -1,3 +1,24 @@
+<!--?php
+include("chartsPHP/config.php");
+include("chartsPHP/lib/inc/chartphp_dist.php");
+include("config.php");
+
+$p = new chartphp();
+
+$p->data_sql = "select country_txt, count(event_id) as attacks
+				from country natural join location natural join events
+				where country_txt= 'Peru' or country_txt= 'China' or country_txt='Iran'
+				group by country_txt";
+
+$p->chart_type = "bar";
+
+$p->title = "Total Attacks per Country";
+$p->xlabel = "country_txt";
+$p->ylabel = "attacks";
+
+$out = $p->render('c1');
+?-->
+
 <!DOCTYPE html>
 
 <html lang = "en">
@@ -11,14 +32,14 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <?php
-    $sets = array("EVENTS","LOCATIONS");
-    $joins = array("EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID");
+    $sets = array("EVENTS");
+    $joins = array();
     $constraints = array();
     $queries = array();
     $resultsNum = 0;
     $cat_type = "";
 
-    function ifsEE($valueName){
+    function ifSetElseEmpty($valueName){
       if(isset($_POST[$valueName])){
         return $_POST[$valueName];
       } else {
@@ -29,7 +50,6 @@
 	// Keep track of number of criteria
     $criteria_count = 0;
     if($_SERVER["REQUEST_METHOD"] == "POST") {
-      unset($_POST['ready']);
       $criteria_count = isset($_POST['criteria_count']) ? $_POST['criteria_count'] : 0;
       if(isset($_POST["add_criteria"])){
           $criteria_count++;
@@ -118,144 +138,95 @@
 				$criteria_txt = $criteria_txt . ", targeting " .$value ;
 			  break;
 			  case "Casualties":
-    				$constraints[] = "(N_KILL+N_WOUND)>=".$value;
-    				$criteria_txt = $criteria_txt . ", with " .$value ." or more casualties";
+				$constraints[] = "(N_KILL+N_WOUND)>=".$value;
+				$criteria_txt = $criteria_txt . ", with " .$value ." or more casualties";
 			  break;
 			  case "Groups":
-      				$sets[] = "EVENTS_GROUPS";
-      				$sets[] = "GROUPS";
-      				$sets[] = "GROUP_SUBNAMES";
-      				$joins[] = "EVENTS.EVENT_ID = EVENTS_GROUPS.EVENT_ID";
-      				$joins[] = "EVENTS_GROUPS.GROUP_ID = GROUPS.GROUP_ID";
-      				$joins[] = "EVENTS_GROUPS.GROUP_SUBNAME_ID = GROUP_SUBNAMES.GROUP_SUBNAME_ID";
-      				$constraints[] = "(UPPER(GROUP_NAME) LIKE UPPER('%".$value."%')
-      								OR UPPER(GROUP_SUBNAME) LIKE UPPER('%".$value."%'))";
-      				$criteria_txt = $criteria_txt . ", committed by " .$value ;
+				$sets = "EVENTS_GROUPS";
+				$sets = "GROUPS";
+				$sets = "GROUP_SUBNAMES";
+				$joins[] = "EVENTS.EVENT_ID = EVENTS_GROUPS.EVENT_ID";
+				$joins[] = "EVENTS_GROUPS.GROUP_ID = GROUPS.GROUP_ID";
+				$joins[] = "EVENTS_GROUPS.GROUP_SUBNAME_ID = GROUP_SUBNAMES.GROUP_SUBNAME_ID";
+				$constraints[] = "(UPPER(GROUP_NAME) LIKE UPPER('%".$value."%')
+								OR UPPER(GROUP_SUBNAME) LIKE UPPER('%".$value."%'))";
+				$criteria_txt = $criteria_txt . ", committed by " .$value ;
               break;
             }
 
           }
         }
-
-        $allSets = " ";
-        $sets = array_unique($sets);
-        $count = count($sets);
-        foreach($sets as $set){
-          $allSets = $allSets.$set;
-          if(--$count > 0){
-            $allSets = $allSets.", ";
-          }
-        }
-
-        $allJoins = "";
-        $joins = array_unique($joins);
-        $count = count($joins);
-        if($count > 0){ $allJoins = " WHERE ";}
-        foreach($joins as $join){
-          $allJoins = $allJoins.$join;
-          if(--$count > 0){
-            $allJoins = $allJoins." AND ";
-          }
-        }
-
-        $allConstraints = "";
-        $constraints = array_unique($constraints);
-        $count = count($constraints);
-        foreach($constraints as $constraint){
-          $allConstraints = " AND ".$constraint.$allConstraints;
-        }
-
-
-        $query = "SELECT * FROM"
-                 .$allSets.$allJoins.$allConstraints;
-
-        $connection = oci_connect('bickell',
-                                  'M2n3ca1a1!1',
-                                  '//oracle.cise.ufl.edu/orcl');
-
-        $statement = oci_parse($connection, $query);
-        oci_execute($statement);
-        $array = array(array("Lat","Long","Name"));
-        while($row = oci_fetch_object($statement)){
-          $summary = "";
-          if(isset($row->SUMMARY_TXT)){
-            $summary = $summary.($row->SUMMARY_TXT);
-          }else{
-            $summary = $summary.($row->IMONTH)."/".($row->IDAY)."/".($row->IYEAR).": ";
-            if(isset($row->MOTIVE)){
-              $summary = $summary.$row->MOTIVE;
-            }
-            $summary = $summary."(No summary available)";
-          }
-          if(isset($row->WEAPON_TYPE_TXT)){
-            $summary = $summary."\nWeapon: ".$row->WEAPON_TYPE_TXT.": ".$row->WEAPON_SUBTYPE_TXT;
-          }
-          if(isset($row->NHOSTKID)){
-            $summary = $summary."\nHostages: ".$row->NHOSTKID;
-            if($row->NDAYS > 0){
-              $summary = $summary." for ".$row->NDAYS." days";
-            }
-          }
-          if(isset($row->TARGET)){
-            $summary = $summary."\nTarget: ".$row->TARGET;
-          }
-          if(isset($row->N_KILL) && isset($row->N_WOUND)){
-            $casualties = $row->N_KILL+$row->N_WOUND;
-            $summary = $summary."\nCasualties: ".$casualties;
-          }
-          if(isset($row->PROP_VALUE)){
-            if ($row->PROP_VALUE != -99){
-              $summary = $summary."\nProperty Damage: ".$row->PROP_VALUE;
-            } else {
-              $summary = $summary."\nProperty Damage: Unknown";
-            }
-          }
-
-
-          $array[] = array($row->LATITUDE,$row->LONGITUDE,$summary);
-        }
-
-        oci_free_statement($statement);
-        oci_close($connection);
-        $_POST['ready'] = "yes";
       }
     }
 
+    $allSets = " ";
+    $sets = array_unique($sets);
+    $count = count($sets);
+    foreach($sets as $set){
+      $allSets = $allSets.$set;
+      if(--$count > 0){
+        $allSets = $allSets.", ";
+      }
+    }
 
+    $allJoins = "";
+    $joins = array_unique($joins);
+    $count = count($joins);
+    if($count > 0){ $allJoins = " WHERE ";}
+    foreach($joins as $join){
+      $allJoins = $allJoins.$join;
+      if(--$count > 0){
+        $allJoins = $allJoins." AND ";
+      }
+    }
+
+    $allConstraints = "";
+    $constraints = array_unique($constraints);
+    $count = count($constraints);
+    foreach($constraints as $constraint){
+      $allConstraints = " AND ".$constraint.$allConstraints;
+    }
+    // //$cat_type = "weapon_type_txt";
+    $query = "SELECT CITY as VALUE, COUNT(*) AS COUNT FROM"
+             .$allSets.$allJoins.$allConstraints
+             ." GROUP BY CITY ORDER BY COUNT DESC";
   ?>
   <script src="chartsPHP/lib/js/jquery.min.js"></script>
   <script src="chartsPHP/lib/js/chartphp.js"></script>
   <link rel="stylesheet" href="chartsPHP/lib/js/chartphp.css">
   <!--Load the AJAX API-->
       <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-      <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJY0Cau73gj1vqYBL3U9heRl6S6VFU7j4&callback"
+      <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJY0Cau73gj1vqYBL3U9heRl6S6VFU7j4&callback=initMap"
   type="text/javascript"></script>
-  <script>
-    google.charts.load('current', { 'packages': ['map'] });
-    google.charts.setOnLoadCallback(drawMap);
+      <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+      <script type="text/javascript">
+      // Load the Visualization API and the piechart package.
+    google.charts.load('current', {'packages':['geochart']});
 
-    function drawMap() {
+    // Set a callback to run when the Google Visualization API is loaded.
+    google.charts.setOnLoadCallback(drawChart);
 
-      if("<?php echo (isset($_POST['ready']))?$_POST['ready']:''; ?>" == "yes"){
+    function drawChart() {
 
-      var data = new google.visualization.arrayToDataTable(<?php echo json_encode($array,JSON_NUMERIC_CHECK)?>);
+      var quer = "<?php echo $query; ?>";
 
+      var jsonData = $.ajax({
+          type: "POST",
+          data: {query: quer},
+          url: "getDataMap.php",
+          dataType: "json",
+          async: false
+          }).responseText;
+      //
+      // // Create our data table out of JSON data loaded from server.
+      var data = new google.visualization.DataTable(jsonData);
       var options = {
-        showTooltip: true,
-        showInfoWindow: true,
-        icons: {
-          default: {
-            normal: 'http://icons.iconarchive.com/icons/fatcow/farm-fresh/32/location-pin-icon.png',
-            selected: 'http://icons.iconarchive.com/icons/fatcow/farm-fresh/32/location-pin-icon.png'
-          }
-        }
+        displayMode: 'markers',
+        colorAxis: {colors: ['yellow', 'orange']}
       };
 
-      var map = new google.visualization.Map(document.getElementById('chart_div'));
-
-      map.draw(data, options);
-    }
-
+      var chart = new google.visualization.GeoChart(document.getElementById('chart_div'));
+      chart.draw(data, options);
     }
     </script>
 </head>
@@ -277,7 +248,10 @@
     </h8>
   </div>
   <h1>Map</h1>
+  <!-- <h3>Country</h3> -->
   <form action = "<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method = POST>
+    <!-- <input type="text" name="location" value="<?php echo ifSetElseEmpty("location");?>"></input> -->
+    <!-- <button type="submit" name="search"><i class="material-icons">search</i></button> -->
 
   <div class="box">
   <h4>
@@ -302,7 +276,7 @@
           if(!session_id()) session_start();
           include("global.php");
           $allConstraintTypes = $_SESSION['allConstraintTypes'];
-          $oldValue = ifsEE("attribute".$criteria_num);
+          $oldValue = ifSetElseEmpty("attribute".$criteria_num);
 
           foreach($allConstraintTypes as $attr){
             echo "<option value=\"".$attr ."\"";
@@ -317,7 +291,7 @@
             <p style=\"margin-left:9px\"> Value</p>
             <input type=\"text\" name=\"value".$criteria_num."\"";
 
-          echo "value=\"".ifsEE("value".$criteria_num)."\"";
+          echo "value=\"".ifSetElseEmpty("value".$criteria_num)."\"";
 
           echo "></input>
           </h6>";
@@ -325,13 +299,15 @@
      ?>
   </div>
   </form>
-  <div class="box2">
+  <div class="box">
   <h4>
     <p style="margin-right: 7px; margin-top: 30px">
       Map
     </p>
   </h4>
+    <div>
     <div id="chart_div"></div>
+  </div>
   </div>
 
 </div>
