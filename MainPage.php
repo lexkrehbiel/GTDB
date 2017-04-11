@@ -23,7 +23,7 @@
     <p>Visualize hits in a specified area </p>
   </button>
   <button class = "terrchart" onclick="javascript:document.location='ChartPage.php'">
-    <h2>Bar Chart</h2>
+    <h2>Charts</h2>
     <p>See the prevalence of different attributes of attacks </p>
   </button>
   <button class = "terrclock" onclick="javascript:document.location='TimePage.php'">
@@ -61,8 +61,8 @@
 				(SELECT COUNT(*) FROM HOSTAGE_SITUATIONS)
 				AS TCOUNT FROM EVENTS WHERE ROWNUM =1";
 		oracle_query($query, $spec);
-	
-		
+
+
 	?>
   </span>
 </div>
