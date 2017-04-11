@@ -253,7 +253,6 @@ $out = $p->render('c1');
              .$allSets.$allJoins.$allConstraints
              ." GROUP BY ".$cat_type
              ." ORDER BY COUNT DESC";
-	echo $query;
   ?>
   <!--Load the AJAX API-->
       <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
