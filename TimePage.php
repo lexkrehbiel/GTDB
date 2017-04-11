@@ -11,6 +11,7 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <?php
+
     $sets = array("EVENTS");
     $joins = array();
     $constraints = array();
@@ -19,6 +20,7 @@
     $cat_type = "";
     $startYear = 1970;
     $endYear = 2015;
+    $array = array(array("Type","Count"));
 
     function ifSetElseEmpty($valueName){
       if(isset($_POST[$valueName])){
@@ -100,7 +102,6 @@
           }
         }
     }
-    }
 
     $allSets = " ";
     $sets = array_unique($sets);
@@ -137,6 +138,39 @@
     $query = "SELECT ".$date." as VALUE, COUNT(*) as COUNT FROM"
              .$allSets.$allJoins
              ." GROUP BY ".$date." ORDER BY ".$date." ASC";
+             $connection = oci_connect('bickell',
+                                       'M2n3ca1a1!1',
+                                       '//oracle.cise.ufl.edu/orcl');
+
+                                      echo $query;
+             $statement = oci_parse($connection, $query);
+             oci_execute($statement);
+
+             $lastValue = 0;
+             $count = 0;
+             while($row = oci_fetch_object($statement)){
+               if($count > 0){
+                 $diff = $row->VALUE-$lastValue;
+                 while($diff > 1){
+                   $lastValue = $lastValue+1;
+                   $array[] = array($lastValue,0);
+                   $diff = $row->VALUE-$lastValue;
+                 }
+
+               }
+               echo $row->VALUE.": ".$row->COUNT." ";
+               $count++;
+               $lastValue = $row->VALUE;
+               $array[] = array($row->VALUE,$row->COUNT);
+             }
+
+             var_dump($array);
+
+             oci_free_statement($statement);
+             oci_close($connection);
+             $_POST['ready'] = "yes";
+
+         }
   ?>
 
   <script src="chartsPHP/lib/js/jquery.min.js"></script>
@@ -154,16 +188,12 @@
 
     function drawChart() {
 
-      var quer = "<?php echo $query; ?>";
+      if("<?php echo (isset($_POST['ready']))?$_POST['ready']:''; ?>" == "yes"){
 
-      var jsonData = $.ajax({
-          type: "POST",
-          data: {query: quer},
-          url: "getDateData.php",
-          dataType: "json",
-          async: false
-          }).responseText;
 
+      var data = new google.visualization.arrayToDataTable(<?php echo json_encode($array,JSON_NUMERIC_CHECK)?>);
+
+      console.log(data);
           var materialOptions = {
             hAxis: {title: "<?php echo $axisName;?>"},
             vAxis: {title: "Number of Attacks"},
@@ -171,13 +201,10 @@
 
           };
 
-
-      // Create our data table out of JSON data loaded from server.
-      var data = new google.visualization.DataTable(jsonData);
-
       // Instantiate and draw our chart, passing in some options.
       var chart = new google.visualization.LineChart(document.getElementById('linechart'));
       chart.draw(data, materialOptions);
+    }
 
     }
     </script>
