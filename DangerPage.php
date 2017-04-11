@@ -38,19 +38,19 @@
       }
     }
     if($_SERVER["REQUEST_METHOD"] == "POST") {
-      list($latitude,$longitude) = explode(', ', $_POST["location"]);
-      $distance = "2*6367.4445*asin(power(power(sin((".$latitude."-LATITUDE)/2),2)+cos(".$latitude.")*cos(LATITUDE)*power(sin((".$longitude."-LONGITUDE)/2),2)),.5)";
+	  $city = $_POST["location"];
+	  $city = str_replace(" ","%20",$city); // Replace spaces with %20 (ASCII space) so it works with the API
+	  
+	  //Find latitude and longitude
+	  $url = "http://maps.googleapis.com/maps/api/geocode/json?address=$city";
+	  $json_data = file_get_contents($url);
+	  $result = json_decode($json_data, TRUE);
+	  $latitude = $result['results'][0]['geometry']['location']['lat'];
+	  $longitude = $result['results'][0]['geometry']['location']['lng'];
+	  
+	  // Display lat and long at top for verification purposes
+	  echo $latitude . ", " . $longitude;
 
-      $query = "SELECT * FROM(SELECT IDAY,IMONTH,IYEAR,SUMMARY_TXT,CITY,COUNTRY_TXT,"
-        .$distance."AS DISTANCE FROM EVENTS,LOCATIONS,COUNTRY
-        WHERE EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID
-        AND COUNTRY.COUNTRY_ID = LOCATIONS.COUNTRY_ID
-        ORDER BY DISTANCE DESC) WHERE ROWNUM < 21";
-
-        // $query = "SELECT DISTINCT * FROM EVENTS, LOCATIONS, COUNTRY "
-        //           .$excessSets." WHERE EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID "
-        //           .$excessJoins." AND COUNTRY.COUNTRY_ID = LOCATIONS.COUNTRY_ID "
-        //           .$allConstraints. " AND ROWNUM < 51";
     }
   ?>
   <form action = "<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method = POST>
@@ -60,46 +60,107 @@
 
   <div class="box">
     <?php
-
+	  include("include.php"); // contains "oracle_query" method
+	  
       if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["search"])) {
 
+	  
+	  // First class type of output takes simple date and lat/long data and calculates every distance
+	  $events_distances = array(); // associative array to hold all event_ids and their distance from input lat/long
+	  class q1{
+		  private $latitude;
+		  private $longitude;
+		  
+		  // Necessary for global latitude and longitude to be accessed (better practice than using $GLOBALS)
+		  public function __construct($latitude, $longitude){
+			  $this->latitude = $latitude;
+			  $this->longitude = $longitude;
+		  }
+		  
+		  function output($statement){
+			  
+			  // Get distances of every row
+			  while ($row = oci_fetch_object($statement)){
+				$distance = $this->distance($this->latitude, $this->longitude, $row->LATITUDE, $row->LONGITUDE);
+				
+				// Add data to array
+				$GLOBALS['events_distances'][$row->EVENT_ID] = $distance;
+			  }
+		  }
+		  
+		  // Distance formula which returns kilometers
+		  function distance($lat1, $lon1, $lat2, $lon2){
+			  $theta = $lon1 - $lon2;
+			  $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) +  cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
+			  $dist = acos($dist);
+			  $dist = rad2deg($dist);
+			  $miles = $dist * 60 * 1.1515;
+			  return $miles * 1.60934;
+		  }
+	  }
+	  
+	  // Get only the fields necessary to perform the distance calculation
+	  $query = "SELECT event_id, latitude, longitude FROM EVENTS NATURAL JOIN LOCATIONS";
+	  $spec = new q1($latitude, $longitude);
+	  
+	  oracle_query($query, $spec);
+	  
+	  // Sort by distance ascending, so we know how close each event is (and can access the (NUM_LIST_ROWS) closest events)
+	  asort($events_distances);
+	  $NUM_LIST_ROWS = 20;
+	  
+	  // Get the first (NUM_LIST_ROWS) keys(event_id) of the array and add them to an SQL formatted string
+	  $event_id_queries = "(";
+	  for ($i = 0; $i < $NUM_LIST_ROWS; $i++){
+		  
+		  $event_id_queries = $event_id_queries . " EVENT_ID=" . key($events_distances) . " OR ";
+		  next($events_distances);
+	  }
+	  $event_id_queries = substr($event_id_queries,0,-3); // remove last "OR" from the string
+	  $event_id_queries = $event_id_queries . ")";
 
-      class q {
+	  // Second output class for calculating danger and listing the closest (NUM_LIST_ROWS) events and their info
+      class q2 {
         function output($statement){
-          echo "<h3> Your danger rating is: </h3>";
-          echo "<h3 class=\"danger\">";
-          $strDate = "12 31 2015";
-          list($m,$d,$y) = explode(" ",$strDate);
-          $date = 10000*$y+100*$m+$d;
-          $dateAvg = 0;
-          $distAvg = 0;
-          $row = oci_fetch_object($statement);
-          $arr = array();
-          //echo " today is ".$date;
-          while ($row = oci_fetch_object($statement)) {
-            $eventDate = $row->IDAY+$row->IMONTH*100+$row->IYEAR*10000;
-            //echo "   ".$eventDate;
-            $dateAvg += $date-$eventDate;
-            $distAvg += $row->DISTANCE;
-            $arr[] = $row;
-          }
-          $distAvg = $distAvg / (40*pi());
-          $dateAvg = $dateAvg/ (20*451130);
-          $danger = 5-25*pow($dateAvg,2)*pow($distAvg,.25);
-          //echo "DISTAVG: ".$distAvg."DATEAVG: ".$dateAvg."\n ";
-          if($danger > 5){
-            $danger = 4.99;
-          } else if($danger < 0 ){
-            $danger = 0.01;
-          }
-          echo "<h3 class=\"danger\">";
-          $final = round(1000*$danger)/1000;
-          echo $final." out of 5";
-          echo "</h3> </h4> </div> <div class=\"box\">";
-          //echo "AVG DIST: ".$distAvg." AVG TIME: ".$dateAvg." DANGER: ".$danger;
-
+			  $lastDate = 10000*2015+100*12+31; // 12 31 2015 (last date in the dataset)
+			  $dateTotal = 0;
+			  $distanceTotal = 0;
+			  
+			  $arr = array(); //Store each row so we can print the list afterwards
+			  
+			  // Add up distances and dates of every row
+			  while ($row = oci_fetch_object($statement)){
+				$distanceTotal += $row->DISTANCE;
+				
+				$date = $row->IDAY+$row->IMONTH*100+$row->IYEAR*10000;
+				$dateTotal += $lastDate-$date;
+				
+				$arr[] = $row;
+			  }
+			  
+			  // Calculate averages and danger rating
+			  $distAvg = $distanceTotal / (40*pi());
+			  $dateAvg = $dateTotal / (20*451130);
+			  $danger = 5-25*pow($dateAvg,2)*pow($distAvg,.25);
+			  
+			  // Normalize danger rating
+			  if($danger > 5){
+				$danger = 4.99;
+			  } else if($danger < 0 ){
+				$danger = 0.01;
+              }
+			  $final = round(1000*$danger)/1000;
+			  
+			  // Display the rating
+			  echo "<h3> Your danger rating is: </h3>";
+			  echo "<h3 class=\"danger\">";
+			  echo $final." out of 5";
+              echo "</h3> </h4> </div> <div class=\"box\">";	
+			  
+		  // List the (NUM_LIST_ROWS) selected
           foreach($arr as $row){
-              $distance = round($row->DISTANCE * 2 * 6371*100)/100;
+              $distance = $GLOBALS['events_distances'][$row->EVENT_ID]; // Get the distance associated with this entry of the associative array
+			  $distance = round($distance*100)/100;
               echo "<div class=\"listitem\">";
               echo "<h5>".$distance." km away: ".($row->CITY).", ".($row->COUNTRY_TXT)."</h5>";
 
@@ -127,38 +188,24 @@
               }
               echo "</p>";
               echo "</div>";
-              //echo "AVG DIST: ".$distAvg." AVG TIME: ".$dateAvg;
           }
         }
 
       }
-      include("include.php");
-      $spec = new q;
-
-      list($latitude,$longitude) = explode(', ', $_POST['location']);
-      //$distance = "2*6367.4445*asin(power(power(sin((".$latitude."-LATITUDE)/2),2)+cos(".$latitude.")*cos(LATITUDE)*power(sin((".$longitude."-LONGITUDE)/2),2)),.5)";
-
-      //echo "<p>".$distance."</p>";
-
-      // $query = "SELECT * FROM (SELECT IDAY, IMONTH, IYEAR, SUMMARY_TXT, CITY, COUNTRY_TXT, "
-      //   .$distance." AS DISTANCE FROM EVENTS, LOCATIONS, COUNTRY
-      //   WHERE EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID
-      //   AND COUNTRY.COUNTRY_ID = LOCATIONS.COUNTRY_ID
-      //   ORDER BY DISTANCE DESC) WHERE ROWNUM < 21";
-
-      $query = "SELECT DISTANCE, IDAY, IMONTH, IYEAR, SUMMARY_TXT, CITY, COUNTRY_TXT
-              FROM (SELECT Latitude, longitude, IDAY, IMONTH, IYEAR, SUMMARY_TXT, CITY, COUNTRY_TXT,
-              (ASIN(SQRT(SIN((".$latitude."-latitude)/(57.29578*2))*SIN((".$latitude."-latitude)/(57.29578*2))
+      
+      $spec = new q2;
+	  
+	  // Note that the distance calculation is only performed on (NUM_LIST_ROWS) tuples 
+      $query = "SELECT EVENT_ID, IDAY, IMONTH, IYEAR, SUMMARY_TXT, CITY, COUNTRY_TXT,  
+	  (ASIN(SQRT(SIN((".$latitude."-latitude)/(57.29578*2))*SIN((".$latitude."-latitude)/(57.29578*2))
                          + COS(latitude/57.29578)
                          * COS(".$latitude."/57.29578)
                          * SIN((".$longitude."-longitude)/(57.29578*2))*SIN((".$longitude."-longitude)/(57.29578*2))
-                       ))) AS distance
+                       ))) AS DISTANCE
          FROM EVENTS, LOCATIONS, COUNTRY
          WHERE EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID
-         AND COUNTRY.COUNTRY_ID = LOCATIONS.COUNTRY_ID
-         ORDER BY distance ASC)
-         WHERE ROWNUM < 21";
-         //LIMIT 25";
+         AND COUNTRY.COUNTRY_ID = LOCATIONS.COUNTRY_ID AND " .$event_id_queries ." ORDER BY distance ASC";
+         
       //echo $query;
 
       oracle_query($query, $spec);
