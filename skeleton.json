@@ -1,6 +1,0 @@
-{
-  "cols": [
-        {"id":"","label":"Type","pattern":"","type":"string"},
-        {"id":"","label":"Count","pattern":"","type":"number"}
-      ],
-  "rows": [ 

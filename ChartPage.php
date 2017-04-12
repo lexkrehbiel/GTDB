@@ -38,6 +38,8 @@ $out = $p->render('c1');
     $queries = array();
     $resultsNum = 0;
     $cat_type = "";
+    $array = array(array("Type","Count"));
+    $criteria_txt = "";
 
     function ifSetElseEmpty($valueName){
       if(isset($_POST[$valueName])){
@@ -128,7 +130,7 @@ $out = $p->render('c1');
         unset($_POST['Hostages']); // Keep track of whether there is already a hostage-related criteria
 
 		$criteria_txt = ""; // Keep track of this to display more information in our graph header
-		
+
         for($crit_proc = 0; $crit_proc<=$criteria_count; $crit_proc++){
           $attrStr = "attribute".$crit_proc;
           $valStr = "value".$crit_proc;
@@ -158,7 +160,7 @@ $out = $p->render('c1');
                 $inputDate = 10000*$year+100*$month+$day;
                 $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
                 $constraints[] = $dbDate." > ".$inputDate;
-				$criteria_txt = $criteria_txt . ", after " .$value ;				
+				$criteria_txt = $criteria_txt . ", after " .$value ;
                 break;
               case "Hostages: Number of":
                 $sets[] = "HOSTAGE_SITUATIONS";
@@ -171,7 +173,7 @@ $out = $p->render('c1');
                 $joins[] = "EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
                 $constraints[] = "NDAYS >= ".$value;
 				$criteria_txt = $criteria_txt . ", where hostages were kept for " .$value. " day(s) or more";
-				
+
               break;
               case "Weapon":
                 $sets[] = "WEAPON_TYPE";
@@ -180,9 +182,9 @@ $out = $p->render('c1');
                 $joins[] = "EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID";
                 $joins[] = "EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID ";
 				$joins[] = "EVENTS_WEAPONS.WEAPON_SUBTYPE_ID = WEAPON_SUBTYPE.WEAPON_SUBTYPE_ID ";
-                $constraints[] = "(UPPER(WEAPON_TYPE_TXT) LIKE UPPER('%".$value."%') 
+                $constraints[] = "(UPPER(WEAPON_TYPE_TXT) LIKE UPPER('%".$value."%')
 								OR UPPER(WEAPON_SUBTYPE_TXT) LIKE UPPER('%".$value."%'))";
-				$criteria_txt = $criteria_txt . ", committed with (a) " .$value;				
+				$criteria_txt = $criteria_txt . ", committed with (a) " .$value;
 
               break;
               case "Target":
@@ -194,14 +196,14 @@ $out = $p->render('c1');
                 $joins[] = "EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID";
 				$joins[] = "TARGETS.TYPE_ID = TARGET_TYPE.TYPE_ID";
                 $joins[] = "TARGETS.SUBTYPE_ID = TARGET_SUBTYPE.SUBTYPE_ID";
-                $constraints[] = "(UPPER(TARGETS.TARGET) LIKE UPPER('%".$value."%') 
-								OR UPPER(TYPE_TXT) LIKE UPPER('%".$value."%') 
+                $constraints[] = "(UPPER(TARGETS.TARGET) LIKE UPPER('%".$value."%')
+								OR UPPER(TYPE_TXT) LIKE UPPER('%".$value."%')
 								OR UPPER(SUBTYPE_TXT) LIKE UPPER('%".$value."%'))";
-				$criteria_txt = $criteria_txt . ", targeting " .$value ;				
+				$criteria_txt = $criteria_txt . ", targeting " .$value ;
 			  break;
 			  case "Casualties":
 				$constraints[] = "(N_KILL+N_WOUND)>=".$value;
-				$criteria_txt = $criteria_txt . ", with " .$value ." or more casualties";				
+				$criteria_txt = $criteria_txt . ", with " .$value ." or more casualties";
 			  break;
 			  case "Groups":
 				$sets[] = "EVENTS_GROUPS";
@@ -210,16 +212,16 @@ $out = $p->render('c1');
 				$joins[] = "EVENTS.EVENT_ID = EVENTS_GROUPS.EVENT_ID";
 				$joins[] = "EVENTS_GROUPS.GROUP_ID = GROUPS.GROUP_ID";
 				$joins[] = "EVENTS_GROUPS.GROUP_SUBNAME_ID = GROUP_SUBNAMES.GROUP_SUBNAME_ID";
-				$constraints[] = "(UPPER(GROUP_NAME) LIKE UPPER('%".$value."%') 
+				$constraints[] = "(UPPER(GROUP_NAME) LIKE UPPER('%".$value."%')
 								OR UPPER(GROUP_SUBNAME) LIKE UPPER('%".$value."%'))";
-				$criteria_txt = $criteria_txt . ", committed by " .$value ;				
+				$criteria_txt = $criteria_txt . ", committed by " .$value ;
               break;
             }
 
           }
         }
-      }
-    }
+      
+
 
     $allSets = " ";
     $sets = array_unique($sets);
@@ -253,6 +255,25 @@ $out = $p->render('c1');
              .$allSets.$allJoins.$allConstraints
              ." GROUP BY ".$cat_type
              ." ORDER BY COUNT DESC";
+
+             $connection = oci_connect('bickell',
+                                       'M2n3ca1a1!1',
+                                       '//oracle.cise.ufl.edu/orcl');
+
+             $statement = oci_parse($connection, $query);
+             oci_execute($statement);
+
+             while($row = oci_fetch_object($statement)){
+               $array[] = array($row->VALUE,$row->COUNT);
+             }
+
+             oci_free_statement($statement);
+             oci_close($connection);
+             $_POST['ready'] = "yes";
+
+         }
+	}
+
   ?>
   <!--Load the AJAX API-->
       <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -266,25 +287,17 @@ $out = $p->render('c1');
 
     function drawChart() {
 
-      var quer = "<?php echo $query; ?>";
+      if("<?php echo (isset($_POST['ready']))?$_POST['ready']:''; ?>" == "yes"){
 
-      var jsonData = $.ajax({
-          type: "POST",
-          data: {query: quer},
-          url: "getData.php",
-          dataType: "json",
-          async: false
-          }).responseText;
-
-      // Create our data table out of JSON data loaded from server.
-      var data = new google.visualization.DataTable(jsonData);
+      var data = new google.visualization.arrayToDataTable(<?php echo json_encode($array,JSON_NUMERIC_CHECK)?>);
 
       // Instantiate and draw our chart, passing in some options.
       var piechart = new google.visualization.PieChart(document.getElementById('piechart_div'));
       piechart.draw(data, {height: 480});
 
       var colchart = new google.visualization.ColumnChart(document.getElementById('colchart_div'));
-      colchart.draw(data, {height: 480});
+      colchart.draw(data, {height: 480, series: {0: {color: 'orange'}}});
+    }
     }
     </script>
 </head>
@@ -373,7 +386,7 @@ $out = $p->render('c1');
     <p style="margin-right: 7px; margin-top: 30px">
       <?php
 
-	  
+
         if(isset($_POST['bar_attribute'])){
           echo "Breakdown of attacks by " . $_POST['bar_attribute'] .$criteria_txt .":";
         } else {
