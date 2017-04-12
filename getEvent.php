@@ -76,6 +76,8 @@ class parseEvent{
 			echo $row->EVENT_ID."<br><br>";
 			// Display location (city, state, country, region)
 			echo $row->CITY . $row->PROV_STATE . $row->COUNTRY_TXT."<br>";
+			// Display REGION
+			echo "Region: " . $row->REGION_TXT ."<br>";
 			// Display latitude and longitude
 			echo $row->LATITUDE . ", " . $row->LONGITUDE . "<br>";
 			// Display date (MM/DD/YYYY)
