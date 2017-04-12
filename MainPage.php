@@ -8,6 +8,8 @@
   <!-- Latest compiled and minified CSS -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="styles/mainpage.css"/>
+  <link rel="stylesheet" type="text/css" href="styles/popup.css"/>
+  <link rel="stylesheet" type="text/css" href="styles/popup.css"/>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 </head>
@@ -23,7 +25,7 @@
     <p>Visualize hits in a specified area </p>
   </button>
   <button class = "terrchart" onclick="javascript:document.location='ChartPage.php'">
-    <h2>Charts</h2>
+    <h2>Bar Chart</h2>
     <p>See the prevalence of different attributes of attacks </p>
   </button>
   <button class = "terrclock" onclick="javascript:document.location='TimePage.php'">
@@ -38,34 +40,34 @@
     <h2>Danger</h2>
     <p>Discover the level of safety in a given location</p>
   </button>
-</div>
-
-<br><br>
-<div class="popup" onclick="showTuplePopup()">Tuple Count
-  <span class="popuptext" id="tupleCount">
-	<?php
-		## Output object
-		class q{
-			function output($statement){
-				echo "<p>". oci_fetch_object($statement)->TCOUNT ." tuples</p>";
+ <br><br>
+	<div class="popup" onclick="showTuplePopup()">Tuple Count
+	  <span class="popuptext" id="tupleCount">
+		<?php
+			## Output object
+			class q{
+				function output($statement){
+					echo "<p>". oci_fetch_object($statement)->TCOUNT ." tuples</p>";
+				}
 			}
-		}
-		## Query stuff
-		include("include.php");
-		$spec = new q;
-		$query = "SELECT
-				(SELECT COUNT(*) FROM EVENTS)+
-				(SELECT COUNT(*) FROM TARGETS)+
-				(SELECT COUNT(*) FROM GROUPS)+
-				(SELECT COUNT(*) FROM LOCATIONS)+
-				(SELECT COUNT(*) FROM HOSTAGE_SITUATIONS)
-				AS TCOUNT FROM EVENTS WHERE ROWNUM =1";
-		oracle_query($query, $spec);
-
-
-	?>
-  </span>
+			## Query stuff
+			include("include.php");
+			$spec = new q;
+			$query = "SELECT
+					(SELECT COUNT(*) FROM EVENTS)+
+					(SELECT COUNT(*) FROM TARGETS)+
+					(SELECT COUNT(*) FROM GROUPS)+
+					(SELECT COUNT(*) FROM LOCATIONS)+
+					(SELECT COUNT(*) FROM HOSTAGE_SITUATIONS)
+					AS TCOUNT FROM EVENTS WHERE ROWNUM =1";
+			oracle_query($query, $spec);
+		
+			
+		?>
+	  </span>
+	</div>
 </div>
+</body>
 <script>
 // When the user clicks on <div>, open the popup
 function showTuplePopup() {
@@ -73,7 +75,4 @@ function showTuplePopup() {
     popup.classList.toggle("show");
 }
 </script>
-
-</body>
-
 </html>

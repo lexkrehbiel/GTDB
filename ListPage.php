@@ -7,6 +7,7 @@
   <!-- Latest compiled and minified CSS -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="styles/listpage.css"/>
+  <link rel="stylesheet" type="text/css" href="styles/popup.css"/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
@@ -391,12 +392,23 @@
 	$spec = new outputObject();
 	//$query = "SELECT * FROM 
 	oracle_query($query, $spec);
-	echo $query;
   }
+  
   ?>
-
+	<div class="popup" onclick="showTuplePopup()">Show Query
+	  <span class="popuptext" id="showquery">
+		<?php echo $query?>
+	  </span>
+	</div>
   </div>
 
+	<script>
+	// When the user clicks on <div>, open the popup
+	function showTuplePopup() {
+		var popup = document.getElementById("showquery");
+		popup.classList.toggle("show");
+	}
+	</script>
 </div>
 
 </body>
