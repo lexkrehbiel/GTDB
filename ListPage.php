@@ -256,7 +256,8 @@
   <?php
 
     if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["search"])) {
-
+	include("include.php");
+	
 	// This class implements an output method so that oracle_query can be called
     class outputObject {
       function output($statement){
@@ -282,7 +283,7 @@
               }
               echo "(No summary available)";
             }
-            if(isset($row->WEAPON_TYPE_TXT)){
+            /*if(isset($row->WEAPON_TYPE_TXT)){
               echo "<p><b>Weapon: </b>".$row->WEAPON_TYPE_TXT.": ".$row->WEAPON_SUBTYPE_TXT;
             }
             if(isset($row->NHOSTKID)){
@@ -304,7 +305,7 @@
 				} else {
 					echo "<p><b>Property Damage: </b> Unknown";
 				}
-			}
+			}*/
 
 			// THIS LINE OPENS THE EVENT_ID SPECIFIC PAGE
 			echo "<p><a href='#;' class='button' onclick=\"window.open('getEvent.php?q=" . $row->EVENT_ID . "')\">See more info...</a></p>";
@@ -316,10 +317,10 @@
         }
       }
     }
-    include("include.php");
-    $spec = new outputObject();
-
-    oracle_query($query, $spec);
+	$spec = new outputObject();
+	//$query = "SELECT * FROM 
+	oracle_query($query, $spec);
+	echo $query;
   }
   ?>
 
