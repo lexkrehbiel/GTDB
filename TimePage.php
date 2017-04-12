@@ -54,118 +54,153 @@
             $value = $_POST[$valStr];
             switch($attribute){
               case "Location":
+              if(preg_match("/^[a-zA-Z]+$/", $value)) {
                 $sets[] = "COUNTRY";
                 $sets[] = "LOCATIONS";
                 $joins[] = "EVENTS.LOCATION_ID = LOCATIONS.LOCATION_ID";
                 $joins[] = "LOCATIONS.COUNTRY_ID = COUNTRY.COUNTRY_ID";
                 $constraints[] = "(UPPER(COUNTRY_TXT) =UPPER('".$value."') OR UPPER(CITY) = UPPER('".$value."') OR UPPER(PROV_STATE) = UPPER('".$value."'))";
-				$criteria_txt = $criteria_txt . ", in " .$value;
-                break;
-                case "Time: Before":
-                        $valid = false;
-                        if (preg_match("/^\d{1,2}\-\d{1,2}\-\d{4}$/", $value)) {
-                            list($month,$day,$year) = explode('-', $value);
-                            $valid = true;
-                        }
-                        else if (preg_match("/^\d{1,2}\/\d{1,2}\/\d{4}$/", $value)) {
-                            list($month,$day,$year) = explode('/', $value);
-                            $valid = true;
-                        }
-                        else if($value >= 1970 && $value <= 2015) {
-                            $month = 01;
-                            $day = 01;
-                            $year = $value;
-                            $valid = true;
-                        }
-                        if(!$valid) {
-                            echo "<script type='text/javascript'>alert('Invalid date!')</script>";
-                        }
-                        else {
-                            $inputDate = 10000*$year+100*$month+$day;
-                            $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
-                            $constraints[] = $dbDate." < ".$inputDate;
-        				    $criteria_txt = $criteria_txt . ", before " .$value ;
-                        }
-                        break;
-                      case "Time: After":
-                        $valid = false;
-                        if (preg_match("/^\d{1,2}\-\d{1,2}\-\d{4}$/", $value)) {
-                            list($month,$day,$year) = explode('-', $value);
-                            $valid = true;
-                        }
-                        else if (preg_match("/^\d{1,2}\/\d{1,2}\/\d{4}$/", $value)) {
-                            list($month,$day,$year) = explode('/', $value);
-                            $valid = true;
-                        }
-                        else if($value >= 1970 && $value <= 2015) {
-                            $month = 01;
-                            $day = 01;
-                            $year = $value;
-                            $valid = true;
-                        }
-                        if(!$valid) {
-                            echo "<script type='text/javascript'>alert('Invalid date!')</script>";
-                        }
-                        else {
-                            $inputDate = 10000*$year+100*$month+$day;
-                            $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
-                            $constraints[] = $dbDate." > ".$inputDate;
-        				    $criteria_txt = $criteria_txt . ", after " .$value ;
-                        }
-                        break;
+  				$criteria_txt = $criteria_txt . ", in " .$value;
+              }
+              else {
+                echo "<script type='text/javascript'>alert('Invalid Location!')</script>";
+              }
+
+              break;
+              case "Time: Before":
+                $valid = false;
+                if (preg_match("/^\d{1,2}\-\d{1,2}\-\d{4}$/", $value)) {
+                  list($month,$day,$year) = explode('-', $value);
+                  $valid = true;
+                }
+                else if (preg_match("/^\d{1,2}\/\d{1,2}\/\d{4}$/", $value)) {
+                  list($month,$day,$year) = explode('/', $value);
+                  $valid = true;
+                }
+                else if($value >= 1970 && $value <= 2015) {
+                  $month = 01;
+                  $day = 01;
+                  $year = $value;
+                  $valid = true;
+                }
+                if(!$valid) {
+                  echo "<script type='text/javascript'>alert('Invalid Date!')</script>";
+                }
+                else {
+                  $inputDate = 10000*$year+100*$month+$day;
+                  $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
+                  $constraints[] = $dbDate." < ".$inputDate;
+                  $criteria_txt = $criteria_txt . ", before " .$value ;
+                }
+              break;
+              case "Time: After":
+                $valid = false;
+                if (preg_match("/^\d{1,2}\-\d{1,2}\-\d{4}$/", $value)) {
+                  list($month,$day,$year) = explode('-', $value);
+                  $valid = true;
+                }
+                else if (preg_match("/^\d{1,2}\/\d{1,2}\/\d{4}$/", $value)) {
+                  list($month,$day,$year) = explode('/', $value);
+                  $valid = true;
+                }
+                else if($value >= 1970 && $value <= 2015) {
+                  $month = 01;
+                  $day = 01;
+                  $year = $value;
+                  $valid = true;
+                }
+                if(!$valid) {
+                  echo "<script type='text/javascript'>alert('Invalid Date!')</script>";
+                }
+                else {
+                  $inputDate = 10000*$year+100*$month+$day;
+                  $dbDate = "10000*IYEAR+100*IMONTH+IDAY";
+                  $constraints[] = $dbDate." > ".$inputDate;
+                  $criteria_txt = $criteria_txt . ", after " .$value ;
+                }
+              break;
               case "Hostages: Number of":
-                $sets[] = "HOSTAGE_SITUATIONS";
-                $joins[] = "EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
-                $constraints[] = "NHOSTKID >= ".$value;
-				$criteria_txt = $criteria_txt . ", with " .$value ." or more hostage(s)";
+                if(preg_match("/^[0-9]+$/", $value)) {
+                    $sets[] = "HOSTAGE_SITUATIONS";
+                    $joins[] = "EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
+                    $constraints[] = "NHOSTKID >= ".$value;
+    				$criteria_txt = $criteria_txt . ", with " .$value ." or more hostage(s)";
+                }
+                else {
+                    echo "<script type='text/javascript'>alert('Invalid Hostages: Number of!')</script>";
+                }
               break;
               case "Hostages: Days":
-                $sets[] = "HOSTAGE_SITUATIONS";
-                $joins[] = "EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
-                $constraints[] = "NDAYS >= ".$value;
-				$criteria_txt = $criteria_txt . ", where hostages were kept for " .$value. " day(s) or more";
-
+                if(preg_match("/^[0-9]+$/", $value)) {
+                    $sets[] = "HOSTAGE_SITUATIONS";
+                    $joins[] = "EVENTS.HOSTAGE_SITUATION_ID = HOSTAGE_SITUATIONS.HOST_SIT_ID";
+                    $constraints[] = "NDAYS >= ".$value;
+    				$criteria_txt = $criteria_txt . ", where hostages were kept for " .$value. " day(s) or more";
+                }
+                else {
+                    echo "<script type='text/javascript'>alert('Invalid Hostages: Days!')</script>";
+                }
               break;
               case "Weapon":
-                $sets[] = "WEAPON_TYPE";
-				$sets[] = "WEAPON_SUBTYPE";
-                $sets[] = "EVENTS_WEAPONS";
-                $joins[] = "EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID";
-                $joins[] = "EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID ";
-				$joins[] = "EVENTS_WEAPONS.WEAPON_SUBTYPE_ID = WEAPON_SUBTYPE.WEAPON_SUBTYPE_ID ";
-                $constraints[] = "(UPPER(WEAPON_TYPE_TXT) LIKE UPPER('%".$value."%')
-								OR UPPER(WEAPON_SUBTYPE_TXT) LIKE UPPER('%".$value."%'))";
-				$criteria_txt = $criteria_txt . ", committed with (a) " .$value;
-
+                if(preg_match("/^[a-zA-Z]+$/", $value)) {
+                    $sets[] = "WEAPON_TYPE";
+    				$sets[] = "WEAPON_SUBTYPE";
+                    $sets[] = "EVENTS_WEAPONS";
+                    $joins[] = "EVENTS.EVENT_ID = EVENTS_WEAPONS.EVENT_ID";
+                    $joins[] = "EVENTS_WEAPONS.WEAPON_TYPE_ID = WEAPON_TYPE.WEAPON_TYPE_ID ";
+    				$joins[] = "EVENTS_WEAPONS.WEAPON_SUBTYPE_ID = WEAPON_SUBTYPE.WEAPON_SUBTYPE_ID ";
+                    $constraints[] = "(UPPER(WEAPON_TYPE_TXT) LIKE UPPER('%".$value."%')
+    								OR UPPER(WEAPON_SUBTYPE_TXT) LIKE UPPER('%".$value."%'))";
+    				$criteria_txt = $criteria_txt . ", committed with (a) " .$value;
+                }
+                else {
+                    echo "<script type='text/javascript'>alert('Invalid Weapon!')</script>";
+                }
               break;
               case "Target":
-                $sets[] = "EVENTS_TARGETS";
-                $sets[] = "TARGETS";
-				$sets[] = "TARGET_TYPE";
-				$sets[] = "TARGET_SUBTYPE";
-                $joins[] = "EVENTS.EVENT_ID = EVENTS_TARGETS.EVENT_ID";
-                $joins[] = "EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID";
-				$joins[] = "TARGETS.TYPE_ID = TARGET_TYPE.TYPE_ID";
-                $joins[] = "TARGETS.SUBTYPE_ID = TARGET_SUBTYPE.SUBTYPE_ID";
-                $constraints[] = "(UPPER(TARGETS.TARGET) LIKE UPPER('%".$value."%')
-								OR UPPER(TYPE_TXT) LIKE UPPER('%".$value."%')
-								OR UPPER(SUBTYPE_TXT) LIKE UPPER('%".$value."%'))";
-				$criteria_txt = $criteria_txt . ", targeting " .$value ;
+                if(preg_match("/^[a-zA-Z]+$/", $value)) {
+                    $sets[] = "EVENTS_TARGETS";
+                    $sets[] = "TARGETS";
+    				$sets[] = "TARGET_TYPE";
+    				$sets[] = "TARGET_SUBTYPE";
+                    $joins[] = "EVENTS.EVENT_ID = EVENTS_TARGETS.EVENT_ID";
+                    $joins[] = "EVENTS_TARGETS.TARGET_ID = TARGETS.TARGET_ID";
+    				$joins[] = "TARGETS.TYPE_ID = TARGET_TYPE.TYPE_ID";
+                    $joins[] = "TARGETS.SUBTYPE_ID = TARGET_SUBTYPE.SUBTYPE_ID";
+                    $constraints[] = "(UPPER(TARGETS.TARGET) LIKE UPPER('%".$value."%')
+    								OR UPPER(TYPE_TXT) LIKE UPPER('%".$value."%')
+    								OR UPPER(SUBTYPE_TXT) LIKE UPPER('%".$value."%'))";
+    				$criteria_txt = $criteria_txt . ", targeting " .$value ;
+                }
+                else {
+                    echo "<script type='text/javascript'>alert('Invalid Target!')</script>";
+                }
 			  break;
 			  case "Casualties":
-				$constraints[] = "(N_KILL+N_WOUND)>=".$value;
-				$criteria_txt = $criteria_txt . ", with " .$value ." or more casualties";
+                if(preg_match("/^[0-9]+$/", $value)) {
+                    $constraints[] = "(N_KILL+N_WOUND)>=".$value;
+                    $criteria_txt = $criteria_txt . ", with " .$value ." or more casualties";
+                }
+                else {
+                    echo "<script type='text/javascript'>alert('Invalid Casualties!')</script>";
+                }
 			  break;
 			  case "Groups":
-				$sets[] = "EVENTS_GROUPS";
-				$sets[] = "GROUPS";
-				$sets[] = "GROUP_SUBNAMES";
-				$joins[] = "EVENTS.EVENT_ID = EVENTS_GROUPS.EVENT_ID";
-				$joins[] = "EVENTS_GROUPS.GROUP_ID = GROUPS.GROUP_ID";
-				$joins[] = "EVENTS_GROUPS.GROUP_SUBNAME_ID = GROUP_SUBNAMES.GROUP_SUBNAME_ID";
-				$constraints[] = "(UPPER(GROUP_NAME) LIKE UPPER('%".$value."%')
-								OR UPPER(GROUP_SUBNAME) LIKE UPPER('%".$value."%'))";
-				$criteria_txt = $criteria_txt . ", committed by " .$value ;
+                if(preg_match("/^[a-zA-Z]+$/", $value)) {
+                    $sets[] = "EVENTS_GROUPS";
+                    $sets[] = "GROUPS";
+                    $sets[] = "GROUP_SUBNAMES";
+                    $joins[] = "EVENTS.EVENT_ID = EVENTS_GROUPS.EVENT_ID";
+                    $joins[] = "EVENTS_GROUPS.GROUP_ID = GROUPS.GROUP_ID";
+                    $joins[] = "EVENTS_GROUPS.GROUP_SUBNAME_ID = GROUP_SUBNAMES.GROUP_SUBNAME_ID";
+                    $constraints[] = "(UPPER(GROUP_NAME) LIKE UPPER('%".$value."%')
+                                    OR UPPER(GROUP_SUBNAME) LIKE UPPER('%".$value."%'))";
+                    $criteria_txt = $criteria_txt . ", committed by " .$value ;
+                }
+                else {
+                    echo "<script type='text/javascript'>alert('Invalid Groups!')</script>";
+                }
+
               break;
             }
 
