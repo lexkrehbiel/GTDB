@@ -18,6 +18,7 @@
     $queries = array();
     $resultsNum = 0;
     $cat_type = "";
+    $criteria_txt = "";
 
     function ifsEE($valueName){
       if(isset($_POST[$valueName])){
@@ -46,7 +47,7 @@
         // Process the search criteria
         unset($_POST['Hostages']); // Keep track of whether there is already a hostage-related criteria
 
-		$criteria_txt = ""; // Keep track of this to display more information in our graph header
+		 // Keep track of this to display more information in our graph header
 
         for($crit_proc = 0; $crit_proc<=$criteria_count; $crit_proc++){
           $attrStr = "attribute".$crit_proc;
@@ -178,6 +179,7 @@
         oci_execute($statement);
         $array = array(array("Lat","Long","Name"));
         while($row = oci_fetch_object($statement)){
+          if(!($row->LATITUDE == -1 && $row->LONGITUDE == -1)){
           $summary = "";
           if(isset($row->SUMMARY_TXT)){
             $summary = $summary.($row->SUMMARY_TXT);
@@ -188,34 +190,12 @@
             }
             $summary = $summary."(No summary available)";
           }
-          if(isset($row->WEAPON_TYPE_TXT)){
-            $summary = $summary."\nWeapon: ".$row->WEAPON_TYPE_TXT.": ".$row->WEAPON_SUBTYPE_TXT;
-          }
-          if(isset($row->NHOSTKID)){
-            $summary = $summary."\nHostages: ".$row->NHOSTKID;
-            if($row->NDAYS > 0){
-              $summary = $summary." for ".$row->NDAYS." days";
-            }
-          }
-          if(isset($row->TARGET)){
-            $summary = $summary."\nTarget: ".$row->TARGET;
-          }
-          if(isset($row->N_KILL) && isset($row->N_WOUND)){
-            $casualties = $row->N_KILL+$row->N_WOUND;
-            $summary = $summary."\nCasualties: ".$casualties;
-          }
-          if(isset($row->PROP_VALUE)){
-            if ($row->PROP_VALUE != -99){
-              $summary = $summary."\nProperty Damage: ".$row->PROP_VALUE;
-            } else {
-              $summary = $summary."\nProperty Damage: Unknown";
-            }
-          }
-		  
+
 		  $summary = $summary . "<br><a href='#;' class='button' onclick=\"window.open('getEvent.php?q=" . $row->EVENT_ID . "')\">See more info...</a>";
 
-		  
+
           $array[] = array($row->LATITUDE,$row->LONGITUDE,$summary);
+        }
         }
 
         oci_free_statement($statement);

@@ -66,11 +66,7 @@
 		?>
 	  </span>
 	</div>
-
-
 </div>
-
-
 </body>
 <script>
 // When the user clicks on <div>, open the popup
