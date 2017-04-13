@@ -1,3 +1,4 @@
+#!/usr/local/bin/php
 <!--?php
 include("chartsPHP/config.php");
 include("chartsPHP/lib/inc/chartphp_dist.php");
@@ -28,7 +29,6 @@ $out = $p->render('c1');
   <!-- Latest compiled and minified CSS -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="styles/chartpage.css"/>
-  <link rel="stylesheet" type="text/css" href="styles/popup.css"/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
@@ -221,7 +221,7 @@ $out = $p->render('c1');
 
           }
         }
-      
+      }
 
 
     $allSets = " ";
@@ -273,7 +273,7 @@ $out = $p->render('c1');
              $_POST['ready'] = "yes";
 
          }
-	}
+
 
   ?>
   <!--Load the AJAX API-->
@@ -311,7 +311,7 @@ $out = $p->render('c1');
 <div class = "container">
   <div style="text-align:center; margin-top:10px">
     <h8 class="menubar">
-      <button style="margin-top: 18px" onclick="javascript:document.location='MainPage.php'"><i class="material-icons" style>home</i></button>
+      <button style="margin-top: 18px" onclick="javascript:document.location='index.html'"><i class="material-icons" style>home</i></button>
       <button><i class="material-icons" onclick="javascript:document.location='ChartPage.php'">assessment</i></button>
       <button><i class="material-icons" onclick="javascript:document.location='ListPage.php'">list</i></button>
       <button><i class="material-icons" onclick="javascript:document.location='TimePage.php'">schedule</i></button>
@@ -399,20 +399,9 @@ $out = $p->render('c1');
     <div>
     <div id="piechart_div"></div>
     <div id="colchart_div"></div>
-	<div class="popup" onclick="showTuplePopup()">Show Query
-	  <span class="popuptext" id="showquery">
-		<?php echo $query?>
-	  </span>
-	</div>
   </div>
   </div>
-	<script>
-	// When the user clicks on <div>, open the popup
-	function showTuplePopup() {
-		var popup = document.getElementById("showquery");
-		popup.classList.toggle("show");
-	}
-	</script>
+
 </div>
 
 </body>

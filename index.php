@@ -1,3 +1,4 @@
+#!/usr/local/bin/php
 <!DOCTYPE html>
 
 <html lang = "en">
@@ -61,8 +62,8 @@
 					(SELECT COUNT(*) FROM HOSTAGE_SITUATIONS)
 					AS TCOUNT FROM EVENTS WHERE ROWNUM =1";
 			oracle_query($query, $spec);
-		
-			
+
+
 		?>
 	  </span>
 	</div>

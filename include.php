@@ -1,3 +1,4 @@
+#!/usr/local/bin/php
 <?php
 function oracle_query($query,$specifier){
   try{
