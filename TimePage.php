@@ -247,7 +247,7 @@
   <div class = "container">
     <div style="text-align:center; margin-top:10px">
       <h8 class="menubar">
-        <button style="margin-top: 18px" onclick="javascript:document.location='MainPage.php'"><i class="material-icons" style>home</i></button>
+        <button style="margin-top: 18px" onclick="javascript:document.location='index.html'"><i class="material-icons" style>home</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='ChartPage.php'">assessment</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='ListPage.php'">list</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='TimePage.php'">schedule</i></button>

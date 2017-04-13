@@ -18,7 +18,7 @@
 <div class = "container">
   <div style="text-align:center; margin-top:10px">
     <h8 class="menubar">
-        <button style="margin-top: 18px" onclick="javascript:document.location='MainPage.php'"><i class="material-icons" style>home</i></button>
+        <button style="margin-top: 18px" onclick="javascript:document.location='index.html'"><i class="material-icons" style>home</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='ChartPage.php'">assessment</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='ListPage.php'">list</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='TimePage.php'">schedule</i></button>
@@ -258,7 +258,7 @@
 
     if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["search"])) {
 	include("include.php");
-	
+
 	// This class implements an output method so that oracle_query can be called
     class outputObject {
       function output($statement){
@@ -319,10 +319,10 @@
       }
     }
 	$spec = new outputObject();
-	//$query = "SELECT * FROM 
+	//$query = "SELECT * FROM
 	oracle_query($query, $spec);
   }
-  
+
   ?>
 	<div class="popup" onclick="showTuplePopup()">Show Query
 	  <span class="popuptext" id="showquery">
