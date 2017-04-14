@@ -16,22 +16,22 @@ button {
 }
 
 button.terrmap {
-  background-image : url("../figures/dotmap.jpg");
+  background-image : url("../figures/map.png");
   background-position: center;
 }
 
 button.terrchart {
-  background-image : url("../figures/barchart.gif");
+  background-image : url("../figures/barchart.png");
   background-position: center;
 }
 
 button.terrclock {
-  background-image : url("../figures/clock.png");
+  background-image : url("../figures/linechart.png");
   background-position: center;
 }
 
 button.terrlist {
-  background-image : url("../figures/reading.jpg");
+  background-image : url("../figures/reading.png");
   background-position: center;
 }
 

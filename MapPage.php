@@ -162,6 +162,7 @@
         }
 
         $allConstraints = "";
+        $constraints[] = "ROWNUM < 500";
         $constraints = array_unique($constraints);
         $count = count($constraints);
         foreach($constraints as $constraint){
@@ -195,12 +196,13 @@
 		  $summary = $summary . "<br><a href='#;' class='button' onclick=\"window.open('getEvent.php?q=" . $row->EVENT_ID . "')\">See more info...</a>";
 
 
-          $array[] = array($row->LATITUDE,$row->LONGITUDE,$summary);
+          $array[] = array((float)$row->LATITUDE,(float)$row->LONGITUDE,$summary);
         }
         }
 
         oci_free_statement($statement);
         oci_close($connection);
+        $array = json_encode($array);
         $_POST['ready'] = "yes";
       }
     }
@@ -222,7 +224,7 @@
 
       if("<?php echo (isset($_POST['ready']))?$_POST['ready']:''; ?>" == "yes"){
 
-      var data = new google.visualization.arrayToDataTable(<?php echo json_encode($array,JSON_NUMERIC_CHECK)?>);
+      var data = new google.visualization.arrayToDataTable(<?php echo $array?>);
 
       var options = {
         showTooltip: true,
@@ -252,7 +254,7 @@
 <div class = "container">
   <div style="text-align:center; margin-top:10px">
     <h8 class="menubar">
-      <button style="margin-top: 18px" onclick="javascript:document.location='index.html'"><i class="material-icons" style>home</i></button>
+      <button style="margin-top: 18px" onclick="javascript:document.location='index.php'"><i class="material-icons" style>home</i></button>
       <button><i class="material-icons" onclick="javascript:document.location='ChartPage.php'">assessment</i></button>
       <button><i class="material-icons" onclick="javascript:document.location='ListPage.php'">list</i></button>
       <button><i class="material-icons" onclick="javascript:document.location='TimePage.php'">schedule</i></button>
@@ -268,7 +270,7 @@
     <p style="margin-right: 7px; margin-top: 30px">Search Criteria:
     </p>
     <form action = "<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method = post>
-
+        <button type="submit" name="search2" style="visibility:hidden"></button>
         <button type="submit" name="add_criteria"><i class="material-icons" >add</i></button>
         <button type="submit" name="remove_criteria"><i class="material-icons" >remove</i></button>
         <input type = "hidden" name = "criteria_count" value = "<?php print $criteria_count; ?>"; />
@@ -318,7 +320,7 @@
     </p>
   </h4>
     <div id="chart_div"></div>
-    <div class="popup" onclick="showTuplePopup()">Show Query
+    <div class="popup" style="margin-top:20px" onclick="showTuplePopup()">Show Query
 	  <span class="popuptext" id="showquery">
 		<?php echo $query?>
 	  </span>

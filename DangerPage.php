@@ -19,7 +19,7 @@
 <div class = "container">
   <div style="text-align:center; margin-top:10px">
     <h8 class="menubar">
-        <button style="margin-top: 18px" onclick="javascript:document.location='index.html'"><i class="material-icons" style>home</i></button>
+        <button style="margin-top: 18px" onclick="javascript:document.location='index.php'"><i class="material-icons" style>home</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='ChartPage.php'">assessment</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='ListPage.php'">list</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='TimePage.php'">schedule</i></button>
@@ -44,14 +44,17 @@
 	  $city = str_replace(" ","%20",$city); // Replace spaces with %20 (ASCII space) so it works with the API
 
 	  //Find latitude and longitude
-	  $url = "http://maps.googleapis.com/maps/api/geocode/json?address=$city";
+	  $url = "https://maps.googleapis.com/maps/api/geocode/json?address=$city";
+    //echo $url;
 	  $json_data = file_get_contents($url);
+    //echo "js".$json_data."\n";
 	  $result = json_decode($json_data, TRUE);
 	  $latitude = $result['results'][0]['geometry']['location']['lat'];
 	  $longitude = $result['results'][0]['geometry']['location']['lng'];
 
 	  // Display lat and long at top for verification purposes
 	  echo $latitude . ", " . $longitude;
+    //echo "res".$result;
 
     }
   ?>
@@ -216,7 +219,7 @@
       oracle_query($query, $spec);
     }
     ?>
-	  <div class="popup" onclick="showTuplePopup()">Show Query
+	  <div class="popup" style="margin-top:20px" onclick="showTuplePopup()">Show Query
 	  <span class="popuptext" id="showquery">
 		<?php echo $query?>
 	  </span>

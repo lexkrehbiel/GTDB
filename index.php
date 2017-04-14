@@ -42,7 +42,7 @@
     <p>Discover the level of safety in a given location</p>
   </button>
  <br><br>
-	<div class="popup" onclick="showTuplePopup()">Tuple Count
+	<div class="popup" style="margin-top:20px" onclick="showTuplePopup()">Tuple Count
 	  <span class="popuptext" id="tupleCount">
 		<?php
 			## Output object

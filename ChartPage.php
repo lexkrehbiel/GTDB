@@ -265,11 +265,12 @@ $out = $p->render('c1');
              oci_execute($statement);
 
              while($row = oci_fetch_object($statement)){
-               $array[] = array($row->VALUE,$row->COUNT);
+               $array[] = array($row->VALUE,(int)$row->COUNT);
              }
 
              oci_free_statement($statement);
              oci_close($connection);
+             $array = json_encode($array);
              $_POST['ready'] = "yes";
 
          }
@@ -290,7 +291,7 @@ $out = $p->render('c1');
 
       if("<?php echo (isset($_POST['ready']))?$_POST['ready']:''; ?>" == "yes"){
 
-      var data = new google.visualization.arrayToDataTable(<?php echo json_encode($array,JSON_NUMERIC_CHECK)?>);
+      var data = new google.visualization.arrayToDataTable(<?php echo $array?>);
 
       // Instantiate and draw our chart, passing in some options.
       var piechart = new google.visualization.PieChart(document.getElementById('piechart_div'));
@@ -311,7 +312,7 @@ $out = $p->render('c1');
 <div class = "container">
   <div style="text-align:center; margin-top:10px">
     <h8 class="menubar">
-      <button style="margin-top: 18px" onclick="javascript:document.location='index.html'"><i class="material-icons" style>home</i></button>
+      <button style="margin-top: 18px" onclick="javascript:document.location='index.php'"><i class="material-icons" style>home</i></button>
       <button><i class="material-icons" onclick="javascript:document.location='ChartPage.php'">assessment</i></button>
       <button><i class="material-icons" onclick="javascript:document.location='ListPage.php'">list</i></button>
       <button><i class="material-icons" onclick="javascript:document.location='TimePage.php'">schedule</i></button>

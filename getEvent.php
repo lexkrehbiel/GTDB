@@ -2,23 +2,17 @@
 <!DOCTYPE html>
 <html>
 	<head>
-	  <link rel="stylesheet" type="text/css" href="styles/listpage.css"/>
-	  <style>
-		table {
-			width: 100%;
-			border-collapse: collapse;
-		}
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="styles/listpage.css"/>
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
-		table, td, th {
-			border: 1px solid black;
-			padding: 5px;
-		}
-
-		th {text-align: left;}
-	  </style>
 	</head>
 <body>
 
+<div class = "container">
 <?php
 $q = ($_GET['q']);
 include("include.php");
@@ -65,7 +59,7 @@ class parseEvent{
 				($row->PROP_EXTENT_TXT!=".") ? $row->PROP_EXTENT_TXT = "Property Damage: " . $row->PROP_EXTENT_TXT : $row->PROP_EXTENT_TXT="Property Damage: None";
 			}
 
-			if (isset($row->PROP_COMMENT)) $row->PROP_COMMENT = $row->PROP_COMMENT . ".<br>";
+			if (isset($row->PROP_COMMENT)) $row->PROP_COMMENT = $row->PROP_COMMENT ."<br>";
 
 			if (isset($row->MOTIVE)){
 				$row->MOTIVE = "Motive: " . $row->MOTIVE;
@@ -74,31 +68,31 @@ class parseEvent{
 			}
 
 			// Display event_id
-			echo $row->EVENT_ID."<br><br>";
+			echo "<h3> Event Number ".$row->EVENT_ID.":</h3><br>";
 			// Display location (city, state, country, region)
-			echo $row->CITY . $row->PROV_STATE . $row->COUNTRY_TXT."<br>";
+			echo "<h4>".$row->CITY . $row->PROV_STATE . $row->COUNTRY_TXT."</h4>";
 			// Display REGION
-			echo "Region: " . $row->REGION_TXT ."<br>";
+			echo "<h5>Region: " . $row->REGION_TXT ."</h5>";
 			// Display latitude and longitude
 			echo $row->LATITUDE . ", " . $row->LONGITUDE . "<br>";
 			// Display date (MM/DD/YYYY)
-			echo $row->IMONTH ."/". $row->IDAY ."/". $row->IYEAR."<br>";
+			echo "<br><h4>".$row->IMONTH ."/". $row->IDAY ."/". $row->IYEAR."</h4>";
 			// Display summary
-			echo $row->SUMMARY_TXT."<br><br>";
+			echo "<h5>".$row->SUMMARY_TXT."</h5>";
 			// Display suicide boolean
 			echo "Suicide attack: " . $row->SUICIDE."<br>";
 			// Display success of attack
-			echo "Attack successful: " . $row->SUCCESSFUL_ATTACK. "<br><br>";
+			echo "Attack successful: " . $row->SUCCESSFUL_ATTACK. "<br>";
 			// Display number of perpetrator and number captures
-			echo $row->NPERPS ."<br>".$row->NPERCAP."<br><br>";
+			echo $row->NPERPS ."<br>".$row->NPERCAP."<br>";
 			// Display property damages
 			echo $row->PROP_EXTENT_TXT . "<br>";
-			echo $row->PROP_COMMENT . "<br>";
+			echo $row->PROP_COMMENT;
 			// Display number of casualties
-			echo "Number killed: " . $row->N_KILL ."<br>" . "Number wounded: " .$row->N_WOUND."<br><br>";
-			echo "Number terrorists killed: " . $row->N_KILL_TER ."<br>". "Number terrorists wounded: " .$row->N_WOUND_TER."<br><br>";
+			echo "Number killed: " . $row->N_KILL ."<br>" . "Number wounded: " .$row->N_WOUND."<br>";
+			echo "Number terrorists killed: " . $row->N_KILL_TER ."<br>". "Number terrorists wounded: " .$row->N_WOUND_TER."<br>";
 			// Display motive
-			echo $row->MOTIVE . ".<br><br>";
+			echo $row->MOTIVE . ".<br>";
 
 			// Display Hostage Situation information
 			if (isset($row->HOSTAGE_SITUATION_ID)){
@@ -130,7 +124,7 @@ class parseEvent{
 					$row->RANSOMNOTE = "None";
 				}
 
-				echo "Hostage Situation: Yes<br>";
+				echo "<h5>Hostage Situation: Yes</h5>";
 				// Display number of hostages
 				echo "Number of hostages: " . $row->NHOSTKID . "<br>";
 				// Display duration of situation
@@ -161,7 +155,7 @@ class parseTargets{
 	function output($statement){
 		$i = 1;
 
-		echo "Targets: <br>";
+		echo "<h4>Targets: </h4>";
 		while ($row = oci_fetch_object($statement)){
 			echo "Target " . $i . ": " . $row->TYPE_TXT . "<br>Subtype: " . $row->SUBTYPE_TXT . "  (" . $row->TARGET . ")<br>";
 			$i++;
@@ -181,7 +175,7 @@ class parseAttackTypes{
 	function output($statement){
 		$i = 1;
 
-		echo "Attack Types: <br>";
+		echo "<h4>Attack Types: </h4>";
 		while ($row = oci_fetch_object($statement)){
 			echo "Attack Type  " . $i . ": " . $row->ATTACK_TYPE_TXT . "<br>";
 			$i++;
@@ -201,7 +195,7 @@ class parseWeapons{
 	function output($statement){
 		$i = 1;
 
-		echo "Weapons: <br>";
+		echo "<h4>Weapons: </h4>";
 		while ($row = oci_fetch_object($statement)){
 			echo "Weapon " . $i . ": " . $row->WEAPON_TYPE_TXT . "<br>Subtype: ". $row->WEAPON_SUBTYPE_TXT ."<br>";
 			$i++;
@@ -222,7 +216,7 @@ class parseGroups{
 	function output($statement){
 		$i = 1;
 
-		echo "Groups: <br>";
+		echo "<h4>Groups: </h4>";
 		while ($row = oci_fetch_object($statement)){
 			echo "Group " . $i . ": " . $row->GROUP_NAME . "<br>Size: ". $row->G_SIZE ."<br>";
 			$i++;
@@ -238,5 +232,6 @@ $groupQuery = "SELECT GROUP_NAME, G_SIZE, GROUP_SUBNAME FROM EVENTS e, EVENTS_GR
 oracle_query($groupQuery, $groupPrinter);
 
 ?>
+</div>
 </body>
 </html>

@@ -19,7 +19,7 @@
 <div class = "container">
   <div style="text-align:center; margin-top:10px">
     <h8 class="menubar">
-        <button style="margin-top: 18px" onclick="javascript:document.location='index.html'"><i class="material-icons" style>home</i></button>
+        <button style="margin-top: 18px" onclick="javascript:document.location='index.php'"><i class="material-icons" style>home</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='ChartPage.php'">assessment</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='ListPage.php'">list</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='TimePage.php'">schedule</i></button>
@@ -63,9 +63,7 @@
 
         // Keyword processing - if no keyword is entered, don't add the summary constraint
         if(!empty($_POST['keyword'])){
-          $keywordQuery = " AND UPPER(EVENTS.SUMMARY_TXT) LIKE UPPER('%".$_POST['keyword']."%') ";
-        } else {
-          $keywordQuery = "";
+          $constraints[] = "UPPER(EVENTS.SUMMARY_TXT) LIKE UPPER('%".$_POST['keyword']."%')";
         }
 
 		 // Show user feedback on what they're searching
@@ -325,7 +323,7 @@
   }
 
   ?>
-	<div class="popup" onclick="showTuplePopup()">Show Query
+	<div class="popup" style="margin-top:20px" style="margin-top:20px" onclick="showTuplePopup()">Show Query
 	  <span class="popuptext" id="showquery">
 		<?php echo $query?>
 	  </span>

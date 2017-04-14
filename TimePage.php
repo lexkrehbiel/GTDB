@@ -136,7 +136,6 @@
 
           }
         }
-    }
 
     $allSets = " ";
     $sets = array_unique($sets);
@@ -194,14 +193,16 @@
                }
                $count++;
                $lastValue = $row->VALUE;
-               $array[] = array($row->VALUE,$row->COUNT);
+               $array[] = array($row->VALUE,(int)$row->COUNT);
              }
 
              oci_free_statement($statement);
              oci_close($connection);
+             $array = json_encode($array);
              $_POST['ready'] = "yes";
 
          }
+       }
   ?>
 
   <script src="chartsPHP/lib/js/jquery.min.js"></script>
@@ -222,7 +223,7 @@
       if("<?php echo (isset($_POST['ready']))?$_POST['ready']:''; ?>" == "yes"){
 
 
-      var data = new google.visualization.arrayToDataTable(<?php echo json_encode($array,JSON_NUMERIC_CHECK)?>);
+      var data = new google.visualization.arrayToDataTable(<?php echo $array?>);
 
           var materialOptions = {
             hAxis: {title: "<?php echo $axisName;?>"},
@@ -249,7 +250,7 @@
   <div class = "container">
     <div style="text-align:center; margin-top:10px">
       <h8 class="menubar">
-        <button style="margin-top: 18px" onclick="javascript:document.location='index.html'"><i class="material-icons" style>home</i></button>
+        <button style="margin-top: 18px" onclick="javascript:document.location='index.php'"><i class="material-icons" style>home</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='ChartPage.php'">assessment</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='ListPage.php'">list</i></button>
         <button><i class="material-icons" onclick="javascript:document.location='TimePage.php'">schedule</i></button>
@@ -266,6 +267,7 @@
       </p>
       <form action = "<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method = post>
 
+          <button type="submit" name="search2" style="visibility:hidden"></button>
           <button type="submit" name="add_criteria"><i class="material-icons" >add</i></button>
           <button type="submit" name="remove_criteria"><i class="material-icons" >remove</i></button>
           <input type = "hidden" name = "criteria_count" value = "<?php print $criteria_count; ?>"; />
@@ -307,7 +309,7 @@
     </div>
     </form>
 
-  <div class="box" style="height:40em">
+  <div class="box" >
   <h4>
     <p style="margin-right: 7px; margin-top: 30px">
 	<?php
@@ -316,7 +318,7 @@
 	</p>
   </h4>
   <div id="linechart"></div>
-  <div class="popup" onclick="showTuplePopup()">Show Query
+  <div class="popup" style="margin-top:20px" onclick="showTuplePopup()">Show Query
 	  <span class="popuptext" id="showquery">
 		<?php echo $query?>
 	  </span>
